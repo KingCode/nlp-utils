@@ -84,12 +84,16 @@ followed by label if not nil.
   (if (not (coll? pres))
     (let [ sb (StringBuffer.)
            _ (. pres show sb)
-           prefix (if show-src? (str (. pres getText) (not-nil label) "\n") "")
+           prefix (if show-src? (str (. pres getText) "\n" (not-nil label) "\n") (str (not-nil label) "\n"))
          ]
         (str prefix (. sb toString) "\n"))
 
     (if (empty? pres) []
-      (let [ head (show-parse (first pres) show-src? label) ] 
-         (cons head (show-parse (rest pres) show-src? label))))))  
+      (let [ c (count pres)
+             dc (dec c)
+             lbl (str label "\n" c)
+             head (show-parse (first pres) show-src? lbl) 
+           ] 
+         (cons head (show-parse (rest pres) false nil))))))  
 ([ pres ]
     (show-parse pres false nil)))

@@ -18,8 +18,8 @@
            p (parser model)
            results (parse-line p line) 
         ]
-;;    str "LINE>" line "\nPARSE>"
-     (. (nth results 0) show))))
+        (is (not (empty? results)))
+     )))
 
 (deftest show-parse-test
   (testing "Show a parse result in  Penn Treebank format"
@@ -36,11 +36,13 @@
            r-1 (show-parse input-1)
            r-2 (show-parse input-2)
            r-3 (show-parse input-3)
+           r-4 (show-parse input-3 true "LINE")
          ]
 
    (println "SHOW=PARSE>\n" r-1) 
    (println "SHOW=PARSE>\n" r-2) 
-   (println "SHOW=PARSE>\n" r-3) ))) 
+   (println "SHOW=PARSE>\n" r-3)
+   (println "SHOW-PARSE>\n" r-4) ))) 
 
 
 
