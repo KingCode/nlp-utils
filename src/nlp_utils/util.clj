@@ -64,3 +64,32 @@ start of each list.
 ([ parser line ]
     (parse-line parser line 1))) 
 
+(defn not-nil
+"Yields the argument if not nil. Otherwise default is returned.
+If no default is provided the empty string is returned"
+([ x default ]
+  (if (nil? x) default x ))
+([ x ]
+  (not-nil x "")))
+
+(defn show-parse
+"Argument must be a opennlp.tools.parser.Parse or collection thereof, namely a Parse[] parse result.
+Yields a string from the result of invoking Parse.show(). If a collection, a seq of such results
+is returned, each one positioned at the same index as its counterpart in the argument.
+
+If show-src? is true the source text corresponding to the parse format is shown first on a separate line,
+followed by label if not nil.
+"
+([ pres show-src? label]
+  (if (not (coll? pres))
+    (let [ sb (StringBuffer.)
+           _ (. pres show sb)
+           prefix (if show-src? (str (. pres getText) (not-nil label) "\n") "")
+         ]
+        (str prefix (. sb toString) "\n"))
+
+    (if (empty? pres) []
+      (let [ head (show-parse (first pres) show-src? label) ] 
+         (cons head (show-parse (rest pres) show-src? label))))))  
+([ pres ]
+    (show-parse pres false nil)))

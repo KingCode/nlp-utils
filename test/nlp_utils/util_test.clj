@@ -13,9 +13,35 @@
     (let [ text (str-from-file "test/data/financial-lnkd.txt")
            sentences (sentences-of text)
            lines (take 1 (drop 2 sentences))
+           line (nth lines 0)
            model (chunking-parser-model)
            p (parser model)
-           results (parse-line p (nth lines 0)) 
+           results (parse-line p line) 
         ]
-    (. (nth results 0) show))))
+;;    str "LINE>" line "\nPARSE>"
+     (. (nth results 0) show))))
+
+(deftest show-parse-test
+  (testing "Show a parse result in  Penn Treebank format"
+    (let [ text (str-from-file "test/data/financial-lnkd.txt")
+           sentences (sentences-of text)
+           lines (take 1 (drop 10 sentences))
+           line (first lines)
+           model (chunking-parser-model)
+           p (parser model)
+           pres (parse-line p line 5)
+           input-1 (nth pres 0)
+           input-2 (nth pres 1)
+           input-3 (take 2 pres) 
+           r-1 (show-parse input-1)
+           r-2 (show-parse input-2)
+           r-3 (show-parse input-3)
+         ]
+
+   (println "SHOW=PARSE>\n" r-1) 
+   (println "SHOW=PARSE>\n" r-2) 
+   (println "SHOW=PARSE>\n" r-3) ))) 
+
+
+
 
