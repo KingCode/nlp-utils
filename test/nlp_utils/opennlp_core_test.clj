@@ -1,6 +1,7 @@
  (ns nlp-utils.opennlp-core-test
   (:use clojure.test
-        nlp-utils.opennlp-core))
+        nlp-utils.opennlp-core
+        nlp-utils.util))
 
 (deftest sentences-of-test
   (testing "Detect the correct number of sentences and reproduce their content"
