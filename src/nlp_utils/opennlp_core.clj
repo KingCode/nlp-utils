@@ -1,16 +1,11 @@
 (ns nlp-utils.opennlp-core
-(:import (java.io File FileInputStream IOException)
+  (:use nlp-utils.util)
+  (:import (java.io File FileInputStream IOException)
         (opennlp.tools.cmdline.parser ParserTool)
         (opennlp.tools.parser Parser ParserFactory ParserModel)
         (opennlp.tools.sentdetect SentenceDetector SentenceDetectorME SentenceModel)
-        (opennlp.tools.chunker ChunkerME ChunkerModel)
-        (org.apache.commons.io FileUtils)
-))
+        (opennlp.tools.chunker ChunkerME ChunkerModel)))
 
-(defn str-from-file
-"Loads a file content into the returned string. The file name must be relative to the classpath"
-[ filename ]
-    (FileUtils/readFileToString (File. filename)))
 
 (def modelDirname "resources/opennlp/models")
 
