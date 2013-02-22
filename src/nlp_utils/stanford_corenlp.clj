@@ -69,7 +69,7 @@ The pipeline is assumed to be configured to annotate for a vtype-class annotatio
 [ sentence ]
   (let [ gr-ann-cl TreeCoreAnnotations$TreeAnnotation 
          gram (.get sentence gr-ann-cl) ]
-        (do (println "TREE OBJ: " gram)
+        (do #_(println "TREE OBJ: " gram)
         (.pennString gram))))
 
 
