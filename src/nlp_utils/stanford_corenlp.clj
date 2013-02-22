@@ -90,6 +90,7 @@ The pipeline is assumed to be configured to annotate for a vtype-class annotatio
  (let [ toktype CoreAnnotations$TokensAnnotation ]
     (.get sentence toktype)))
 
+
 (defn tokens-for
 "Yields a lazy seq of attributes for each token of the argument sentence/fragment map (edu.stanford.nlp.util.CoreMap).
  If none are specified, all available attributes are collected (as per TOKEN_IDS).
@@ -99,10 +100,10 @@ The pipeline is assumed to be configured to annotate for a vtype-class annotatio
   (let [ attrs (if (nil? attrs-arg) TOKEN_IDS attrs-arg)
          toktype CoreAnnotations$TokensAnnotation
          tokens (.get sentence toktype) ]
-    (do (println "TOKENS-FOR: tokens are: " tokens)
-    (map #(.toShorterString % attrs) tokens))))
+    (map #(.toShorterString % attrs) tokens)))
 ([ sentence ]
     (tokens-for sentence nil)))
+
 
 (defn tokens-for-sentxt
 "Convenience for testing. Same as tokens-for, but argument is a single sentence text.

@@ -12,6 +12,10 @@
 (defn ftr[ name ] (print-header (str name " END") "" " ++++++++++++++++++++++++++++++++++++ "))
 
 
+(def SPLIT-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit"})))
+(def POS-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos"})))
+(def NER-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner"})))
+(def PARSE-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner, parse"})))
 
 (def document (atom nil))
 
@@ -21,12 +25,14 @@
     (if (nil? @document)
         (swap! document (fn [ v ] (if (not (nil? v)) v
                                         (let [ txt (str-from-file DATA_FIL) ]
-                                          (sentences txt))))))
+                                          (sentences txt SPLIT-PL false))))))
     @document))
                  
 (defn show-sentences
 [ txt grammar? test-name msg]
-  (let [ sents (sentences txt grammar?) ] 
+  (let [ 
+         ppln (if grammar? PARSE-PL SPLIT-PL)
+         sents (sentences txt ppln grammar?)    ] 
     (hdr test-name msg) 
     (if grammar?
       (doall (map #(println "\n\nSENTENCE TEXT:\n" (first %) "\nSENTENCE PARSE: " (second %)) sents))
@@ -63,16 +69,13 @@
     (ftr "annotated-pipeline test")))
 
 
-(def SPLIT-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit"})))
-(def POS-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos"})))
-(def NER-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner"})))
-(def PARSE-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner, parse"})))
 
 (deftest annotated-pipeline-test
   (testing "Should construct and annotate a pipeline from an annotation"
     (let [ ann (annotation-for TXT)
-           props (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner"})
-           pln (annotated-pipeline ann props)
+;;           props (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner"})
+;;         pln (annotated-pipeline ann props)
+           pln NER-PL
         ]
        (is (not (nil? pln)))
        (hdr "annotated-pipeline test" "tokens and text")
@@ -87,8 +90,9 @@
   (testing "Should annotated multi-sentences text using only sentence annotator"
     (let [ txt (str-from-file DATA_FIL)
            ann (annotation-for txt)
-           props (props-for {CONFIG_ANN "tokenize, ssplit"})
-           pln (annotated-pipeline ann props) 
+           ;;props (props-for {CONFIG_ANN "tokenize, ssplit"})
+           ;;pln (annotated-pipeline ann props) 
+           pln SPLIT-PL
         ]
         (hdr "annotated-pipeline-test-sentencesFromFile" "breaking up sentences from a document") 
         (is (not (nil? pln)))
@@ -100,7 +104,6 @@
   (testing "Should parse entire document body and return a list of sentences"
     (let [ txt (str-from-file DATA_FIL)
            sents (get-document-sentences)
-           ;;sents (sentences txt)
            size  (count sents)
             ]
         (is (< 0 size))
@@ -114,7 +117,7 @@
 
 (deftest annotated-for-sentence-test
   (testing "Should produce a grammar from a small/single element sentence seq"
-    (let [ sents (annotated-for-sentence TXT (new-pipeline))
+    (let [ sents (annotated-for-sentence TXT PARSE-PL)
            s (nth sents 0)
          ]
         (is (not (nil? s)))
@@ -125,7 +128,7 @@
 
 (deftest sentences-test-with-grammar
   (testing "Should parse a sentence and provide both text and grammar tree"
-   (let [  sents (sentences TXT true) ]
+   (let [  sents (sentences TXT  PARSE-PL true) ]
         (hdr "sentences-test-with-grammar" "Parsing a single sentence with grammar") 
         (doall (map #(println "\n\nSENTENCE TEXT:\n" (first %) "\nSENTENCE PARSE: " (second %)) sents))
         (ftr "sentences-test-with-grammar")
@@ -176,8 +179,8 @@
 
 (deftest tokens-for-test
   (testing "Should parse a sentence and list essential (TOKEN_MIN) attributes for each token"
-    (let [ toks (tokens-for-sentxt TXT) ]
-      (hdr "tokens-for-test" "parsing minimal tokens on default pipeline")
+    (let [ toks (tokens-for-sentxt TXT TOKEN_MIN PARSE-PL) ]
+      (hdr "tokens-for-test" "parsing minimal tokens on parsing pipeline")
       (display-toks toks)    
       (ftr "tokens-for-test"))))
 
