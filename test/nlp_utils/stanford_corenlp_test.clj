@@ -11,6 +11,8 @@
 (defn hdr[ name msg ] (print-header (str name " START: ")  msg " ***************************** "))
 (defn ftr[ name ] (print-header (str name " END") "" " ++++++++++++++++++++++++++++++++++++ "))
 
+
+
 (def document (atom nil))
 
 (defn get-document-sentences
@@ -59,6 +61,12 @@
     (hdr (str "annotated-pipeline test-" label) "full report via .prettyPrint")
     (.prettyPrint pln ann System/out)
     (ftr "annotated-pipeline test")))
+
+
+(def SPLIT-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit"})))
+(def POS-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos"})))
+(def NER-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner"})))
+(def PARSE-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner, parse"})))
 
 (deftest annotated-pipeline-test
   (testing "Should construct and annotate a pipeline from an annotation"
@@ -163,6 +171,26 @@
   (show-fragments-with-grammar PART-2 2)
 ))
 
+(defn display-toks
+[ toks] (println (interpose "\n" toks)))
+
+(deftest tokens-for-test
+  (testing "Should parse a sentence and list essential (TOKEN_MIN) attributes for each token"
+    (let [ toks (tokens-for-sentxt TXT) ]
+      (hdr "tokens-for-test" "parsing minimal tokens on default pipeline")
+      (display-toks toks)    
+      (ftr "tokens-for-test"))))
+
+
+(deftest tokens-for-test-with-NER
+  (testing "Should parse a sentence and list only text, POS and NER attrs for each token" 
+    (let [  attrs (select-tokens :txt :pos :ner) 
+            toks (tokens-for-sentxt TXT attrs NER-PL) ]
+      (hdr "tokens-for-test" "collecting TXT, POS and NER attrs from tokens")
+      (display-toks toks)    
+      (ftr "tokens-for-test"))))
+
+;;Do not try this at home: parsing table of figures
 #_(deftest irregular-sentence-table-with-grammar
   (testing "Should show parse tree for a financial table sentence"
     (let [ txt (str-from-file DATA_FIL)
@@ -170,9 +198,8 @@
            sents (get-document-sentences)
            tab-sent (nth sents 80)
             ]
-        (show-sentences tab-sent true "irregular-sentence-table-with-grammar" "Parsing a table of figures")
+   (show-sentences tab-sent true "irregular-sentence-table-with-grammar" "Parsing a table of figures")
 )))
-
 
 ;;Do not try this at home, lest you like to choke your machine
 #_(deftest sentences-test-with-grammar-fromFile
