@@ -27,6 +27,13 @@
        ]
     (show-sentences txt true name msg)))
 
+
+(defn show-fragments-with-grammar
+[ txt idx ]
+  (let [ name (str "fragments-test-with-grammar-" idx)
+         msg "Parsing a sentence fragment" ]
+    (show-sentences txt true name msg))) 
+
 (deftest annotation-for-test
   (testing "Should build an annotation from text"
     (let [ ann (annotation-for TXT) ]
@@ -112,6 +119,21 @@
 (deftest sentences-test-with-grammar-6
   (testing "Should parse a sentence and provide both text and grammar tree"
   (show-sentences-with-grammar  TXT-6 6)
+))
+
+(deftest fragments-teest-with-grammar
+  (testing "Should parse a sentence fragment and provide text and grammar tree, still"
+  (show-fragments-with-grammar PART 0)
+))
+
+(deftest fragments-teest-with-grammar-1
+  (testing "Should parse a sentence fragment and provide text and grammar tree, still"
+  (show-fragments-with-grammar PART-1 1)
+))
+
+(deftest fragments-teest-with-grammar-2
+  (testing "Should parse a sentence fragment and provide text and grammar tree, still"
+  (show-fragments-with-grammar PART-2 2)
 ))
 
 ;;Do not try this at home, lest you like to choke your machine

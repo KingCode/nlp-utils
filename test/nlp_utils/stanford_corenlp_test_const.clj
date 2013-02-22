@@ -1,6 +1,19 @@
 (ns nlp-utils.stanford-corenlp-test-const)
 
+(comment "
+
+Naming Conventions: 
+        DATA_FIL[-n] for text files
+        TXT[-n] for sentences
+        PART[-n] for fragments
+
+")
+
 (def DATA_FIL "test/data/financial-lnkd.txt")
+
+(def PART "an increase of 81%")
+(def PART-1 "compared to $167.7 million in the fourth quarter of 2011.")
+(def PART-2 " and grew cumulative membership 39% year over year.") 
 
 (def TXT "GAAP diluted EPS for the fourth quarter was $0.10; Non-GAAP diluted EPS for the fourth quarter was $0.35.")
 
