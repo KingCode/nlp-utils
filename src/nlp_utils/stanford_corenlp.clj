@@ -5,6 +5,7 @@
     (java.util List)
     (edu.stanford.nlp.io IOUtils)
     (edu.stanford.nlp.ling CoreAnnotations 
+                           CoreAnnotations$TokensAnnotation
                            CoreAnnotations$TextAnnotation 
                            CoreAnnotations$SentencesAnnotation)
     (edu.stanford.nlp.pipeline StanfordCoreNLP Annotation)
@@ -12,6 +13,8 @@
     (edu.stanford.nlp.util CoreMap)))
 
 (def CONFIG_ANN "annotators")
+(def TOKEN_IDS  '("Text", "PartOfSpeech", "Lemma", "Answer", "NamedEntityTag", "CharacterOffsetBegin", 
+                "CharacterOffsetEnd", "NormalizedNamedEntityTag", "Timex", "TrueCase", "TrueCaseText"))
 
 (defn annotation-for
 "Yields a new Annotation from the text argument, or filepath if file? is true"
@@ -62,7 +65,14 @@ The pipeline is assumed to be configured to annotate for a vtype-class annotatio
   (let [  ann-cl CoreAnnotations$SentencesAnnotation ]
          (annotated-for txt pipeline ann-cl))) 
 
-
+(defn tokens-for
+"Yields a lazy seq of attributes for each token of the argument sentence/fragment map (edu.stanford.nlp.util.CoreMap).
+ If none are specified, all available attributes are collected.
+"
+[ sentence & attrs ]
+  (let [ toktype CoreAnnotations$TokensAnnotation
+         tokens (.get sentence toktype) ]
+    (map #(.toShorterString % TOKEN_IDS) tokens)))
 
 (defn grammar-of
 "Yields the grammatical structure for the argument sentence map (edu.stanford.nlp.util.CoreMap)."
@@ -87,7 +97,7 @@ for at least 'tokenize, ssplit'. If not provided, a new pipeline is constructed.
                    (map text-of sents))))
 ([ content grammar?]
     (let [ 
-            annotators (if grammar? "tokenize, ssplit, pos, lemma, ner, parse, dcoref" "tokenize, ssplit")
+            annotators (if grammar? "tokenize, ssplit, pos, lemma, ner, parse" "tokenize, ssplit")
             props (props-for {CONFIG_ANN annotators})
             pl (new-pipeline props) ] 
         (sentences content pl grammar?)))

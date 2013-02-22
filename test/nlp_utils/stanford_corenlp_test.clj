@@ -11,6 +11,17 @@
 (defn hdr[ name msg ] (print-header (str name " START: ")  msg " ***************************** "))
 (defn ftr[ name ] (print-header (str name " END") "" " ++++++++++++++++++++++++++++++++++++ "))
 
+(def document (atom nil))
+
+(defn get-document-sentences
+[]
+  (do
+    (if (nil? @document)
+        (swap! document (fn [ v ] (if (not (nil? v)) v
+                                        (let [ txt (str-from-file DATA_FIL) ]
+                                          (sentences txt))))))
+    @document))
+                 
 (defn show-sentences
 [ txt grammar? test-name msg]
   (let [ sents (sentences txt grammar?) ] 
@@ -39,6 +50,16 @@
     (let [ ann (annotation-for TXT) ]
       (is (not (nil? ann))))))
 
+(defn show-annotated-pipeline
+[ txt label]
+(let [ ann (annotation-for txt)
+       props (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner"})
+       pln (annotated-pipeline ann props) 
+     ]
+    (hdr (str "annotated-pipeline test-" label) "full report via .prettyPrint")
+    (.prettyPrint pln ann System/out)
+    (ftr "annotated-pipeline test")))
+
 (deftest annotated-pipeline-test
   (testing "Should construct and annotate a pipeline from an annotation"
     (let [ ann (annotation-for TXT)
@@ -50,6 +71,9 @@
        (.prettyPrint pln ann System/out)
        (ftr "annotated-pipeline test")
 )))
+
+;;(deftest annotated-pipeline-test-2
+
 
 #_(deftest annotated-pipeline-test-sentencesFromFile
   (testing "Should annotated multi-sentences text using only sentence annotator"
@@ -67,13 +91,16 @@
 (deftest sentences-test
   (testing "Should parse entire document body and return a list of sentences"
     (let [ txt (str-from-file DATA_FIL)
-           sents (sentences txt) ]
-        (is (< 0 (count sents)))
+           sents (get-document-sentences)
+           ;;sents (sentences txt)
+           size  (count sents)
+            ]
+        (is (< 0 size))
         #_(println "SENTENCE 0: " (nth sents 0) "\nSENTENCE 1: " (nth sents 1)
                  "SENTENCE 2: " (nth sents 2) "\nSENTENCE 30: " (nth sents 30))
 
-        (hdr "sentences breakup test" "Showing all sentences from a document") 
-        (doall (map #(println "\n\nSENTENCE: \n" %) sents))
+        (hdr "sentences breakup test" (str "Showing all " size " sentences from document " DATA_FIL))
+        (doall (map #(println (str "\n\nSENTENCE: " %2 "\n" %1)) sents (range 0 size)))
         (ftr "sentences breakup test")
 )))
 
@@ -135,6 +162,17 @@
   (testing "Should parse a sentence fragment and provide text and grammar tree, still"
   (show-fragments-with-grammar PART-2 2)
 ))
+
+#_(deftest irregular-sentence-table-with-grammar
+  (testing "Should show parse tree for a financial table sentence"
+    (let [ txt (str-from-file DATA_FIL)
+           ;;sents (sentences txt) 
+           sents (get-document-sentences)
+           tab-sent (nth sents 80)
+            ]
+        (show-sentences tab-sent true "irregular-sentence-table-with-grammar" "Parsing a table of figures")
+)))
+
 
 ;;Do not try this at home, lest you like to choke your machine
 #_(deftest sentences-test-with-grammar-fromFile
