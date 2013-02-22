@@ -45,22 +45,54 @@ Annotation is assumed to have been initialized. See new-pipeline for constraints
   (do ;;(println "text-of: arg is" coremap)
   (.get coremap CoreAnnotations$TextAnnotation)))  
 
+
+(defn annotated-for
+"Yields a seq of core maps (edu.stanford.nlp.util.CoreMap) resuting from content annotated by pipeline.
+The pipeline is assumed to be configured to annotate for a vtype-class annotation.
+"
+[ content pipeline atype-class]
+  (let [ ann (annotation-for content)
+         _ (.annotate pipeline ann) ]
+    (.get ann atype-class)))
+
+
+(defn annotated-for-sentence
+"Yields a seq of sentence core maps (edu.stanford.nlp.util.CoreMap) from text."
+[ txt pipeline ]
+  (let [  ann-cl CoreAnnotations$SentencesAnnotation ]
+         (annotated-for txt pipeline ann-cl))) 
+
+
+
+(defn grammar-of
+"Yields the grammatical structure for the argument sentence map (edu.stanford.nlp.util.CoreMap)."
+[ sentence ]
+  (let [ gr-ann-cl TreeCoreAnnotations$TreeAnnotation 
+         gram (.get sentence gr-ann-cl) ]
+        (do (println "TREE OBJ: " gram)
+        (.pennString gram))))
+
+
 (defn sentences
 "Yields a seq of sentences resulting from annotating 'content' with pipeline. 
 'content' must be either text or a classpath relative text file.
 'pipeline' must be an  edu.stanford.pipeline.AnnotationPipeline initualized with annotators 
 for at least 'tokenize, ssplit'. If not provided, a new pipeline is constructed.
 "
-([ content pipeline ]
-    (let [ sent-ann (annotation-for content)
-           _ (.annotate pipeline sent-ann)
-           sent-ann-cl CoreAnnotations$SentencesAnnotation          
-           sents (.get sent-ann sent-ann-cl)
-         ]
-      (map text-of sents)))
+([ content pipeline grammar?]
+    (let [ 
+           sent-ann-cl CoreAnnotations$SentencesAnnotation
+           sents (annotated-for content pipeline sent-ann-cl) ]
+      (if grammar? (map #(vector (text-of %) (grammar-of %)) sents)
+                   (map text-of sents))))
+([ content grammar?]
+    (let [ 
+            annotators (if grammar? "tokenize, ssplit, pos, lemma, ner, parse, dcoref" "tokenize, ssplit")
+            props (props-for {CONFIG_ANN annotators})
+            pl (new-pipeline props) ] 
+        (sentences content pl grammar?)))
 ([ content ]
-    (let [ pl (new-pipeline (props-for { CONFIG_ANN "tokenize, ssplit"})) ]
-        (sentences content pl))))
+    (sentences content false)))
     
 
 

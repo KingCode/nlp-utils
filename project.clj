@@ -11,5 +11,5 @@
                 ]
   :resource-paths [ "resources/stanford-corenlp/stanford-corenlp-1.3.4-models.jar" ]
   :repositories ["snapshots" "https://repository.apache.org/content/repositories/snapshots"]
-  :jvm-opts [ "-Xmx1024m"]
+  :jvm-opts [ "-Xmx7g"]
 )

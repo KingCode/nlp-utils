@@ -36,3 +36,8 @@
 []
   (let [ cp (. (System/getProperties) getProperty "java.class.path") ]
     (println (apply str (interpose "\n" (. cp split ":"))))))
+
+(defn print-header
+"Outputs a header and message with surrounding padding, to the console."
+[ hdr msg padding ]
+  (println (str "\n" padding hdr msg padding "\n")))
