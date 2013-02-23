@@ -77,10 +77,21 @@ argument tokens matching attr and val"
        ]
     (sort #(compare (second %1) (second %2)) occurs)))
 
+
 (defn attr-count
 "Yields the number of occurences of tokens with attribute attr having value val"
 [ tokens attr val ]
   (count (filter #(is-match % attr val) tokens)))  
+
+
+(defn money-count
+[ tokens ]
+  (attr-count tokens :ner :MONEY))
+
+
+(defn number-count
+[ tokens ]
+  (attr-count tokens :ner :NUMBER))
 
 (defn attr-ratio
 "Yields the ratio of tokens with attribute attr having value val relative 

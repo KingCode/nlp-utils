@@ -6,17 +6,13 @@
   (:use clojure.test
         nlp-utils.stanford-corenlp
         nlp-utils.stanford-corenlp-const
+        nlp-utils.stanford-corenlp-pool
         nlp-utils.util
         nlp-utils.stanford-corenlp-test-const))
 
 (defn hdr[ name msg ] (print-header (str name " START: ")  msg " ***************************** "))
 (defn ftr[ name ] (print-header (str name " END") "" " ++++++++++++++++++++++++++++++++++++ "))
 
-
-(def SPLIT-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit"})))
-(def POS-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos"})))
-(def NER-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner"})))
-(def PARSE-PL (new-pipeline (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner, parse"})))
 
 (def document (atom nil))
 
@@ -103,8 +99,7 @@
                  
 (deftest sentences-test
   (testing "Should parse entire document body and return a list of sentences"
-    (let [ txt (str-from-file DATA_FIL)
-           sents (get-document-sentences)
+    (let [ sents (get-document-sentences)
            size  (count sents)
             ]
         (is (< 0 size))
