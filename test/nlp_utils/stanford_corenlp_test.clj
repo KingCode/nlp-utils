@@ -5,6 +5,7 @@
            (edu.stanford.nlp.trees Tree TreeCoreAnnotations))
   (:use clojure.test
         nlp-utils.stanford-corenlp
+        nlp-utils.stanford-corenlp-const
         nlp-utils.util
         nlp-utils.stanford-corenlp-test-const))
 
@@ -117,12 +118,12 @@
 
 (deftest annotated-for-sentence-test
   (testing "Should produce a grammar from a small/single element sentence seq"
-    (let [ sents (annotated-for-sentence TXT PARSE-PL)
+    (let [ txt TXT sents (annotated-for-sentence txt PARSE-PL)
            s (nth sents 0)
          ]
         (is (not (nil? s)))
         (hdr "annotated-for-sentence test" "full annotations, showing  grammar")
-        (println (grammar-of s))
+        (println "TEXT:\n" txt "\nGRAMMAR:\n\n" (grammar-of s))
         (ftr "annotated-for-sentence test")
 )))
 
@@ -159,6 +160,11 @@
   (show-sentences-with-grammar  TXT-6 6)
 ))
 
+(deftest sentences-test-with-grammar-7
+  (testing "Show grammatical structure for first sentence (extract company & stock symbol)"
+  (show-sentences-with-grammar  (nth (get-document-sentences) 0) 7)
+))
+
 (deftest fragments-teest-with-grammar
   (testing "Should parse a sentence fragment and provide text and grammar tree, still"
   (show-fragments-with-grammar PART 0)
@@ -175,22 +181,22 @@
 ))
 
 (defn display-toks
-[ toks] (println (interpose "\n" toks)))
+[ txt toks] (println "TEXT:\n" txt "\nTOKENS:\n" (interpose "\n" toks)))
 
 (deftest tokens-for-test
   (testing "Should parse a sentence and list essential (TOKEN_MIN) attributes for each token"
-    (let [ toks (tokens-for-sentxt TXT TOKEN_MIN PARSE-PL) ]
+    (let [ txt TXT toks (tokens-for-sentxt txt TOKEN_MIN PARSE-PL) ]
       (hdr "tokens-for-test" "parsing minimal tokens on parsing pipeline")
-      (display-toks toks)    
+      (display-toks txt toks)    
       (ftr "tokens-for-test"))))
 
 
 (deftest tokens-for-test-with-NER
   (testing "Should parse a sentence and list only text, POS and NER attrs for each token" 
-    (let [  attrs (select-tokens :txt :pos :ner) 
-            toks (tokens-for-sentxt TXT attrs NER-PL) ]
+    (let [  txt TXT attrs (select-tokens :txt :pos :ner) 
+            toks (tokens-for-sentxt txt attrs NER-PL) ]
       (hdr "tokens-for-test" "collecting TXT, POS and NER attrs from tokens")
-      (display-toks toks)    
+      (display-toks txt toks)    
       (ftr "tokens-for-test"))))
 
 ;;Do not try this at home: parsing table of figures

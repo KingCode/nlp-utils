@@ -1,5 +1,5 @@
 (ns nlp-utils.stanford-corenlp
-  (:use nlp-utils.util)
+  (:use nlp-utils.stanford-corenlp-const nlp-utils.util)
   (:import 
     (java.io PrintWriter) 
     (java.util List)
@@ -12,18 +12,6 @@
     (edu.stanford.nlp.trees Tree TreeCoreAnnotations TreeCoreAnnotations$TreeAnnotation)
     (edu.stanford.nlp.util CoreMap)))
 
-(def EMPTY_STR_ARRAY (make-array String 0))
-(def CONFIG_ANN "annotators")
-
-(def TOK_MAP { :txt "Text", :pos "PartOfSpeech", :ner "NamedEntityTag", :start "CharacterOffsetBegin"
-               :end "CharacterOffsetEnd", :nner "NormalizedNamedEntityTag", :lemma "Lemma"
-               :timex "Times", :tcase "TrueCase", :tcasetxt "TrueCaseText"}) 
-
-(def TOKEN_IDS  (.toArray 
-                    '("Text", "PartOfSpeech", "Lemma", "Answer", "NamedEntityTag", "CharacterOffsetBegin", 
-                     "CharacterOffsetEnd", "NormalizedNamedEntityTag", "Timex", "TrueCase", "TrueCaseText")
-                        EMPTY_STR_ARRAY))
-
 (defn select-tokens
 "Constructs a String array of normalized token IDs for selected tokens we are interested in.
  arguments are looked up in TOK_MAP, so should be keys from it.
@@ -33,7 +21,9 @@
         toks (map #(get TOK_MAP % "Text") keys) ]
     (.toArray toks EMPTY_STR_ARRAY)))
 
+
 (def TOKEN_MIN (select-tokens :text :pos :ner :nner))
+
 
 (defn annotation-for
 "Yields a new Annotation from the text argument, or filepath if file? is true"

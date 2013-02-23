@@ -18,6 +18,7 @@
 [ filepath ]
     (FileUtils/readFileToString (File. filepath)))
 
+
 (defn props-for
 "Constructs and returns a java.util.Properties from the input map"
 [ m ] (let [ p (Properties.) 
@@ -25,17 +26,29 @@
              vs (vals m)
              _ (doall (map #(.setProperty p %1 %2) ks vs)) ]  p ))
 
+
 (defn cls
 "Prints n-1 form feeds - default is 15. Intended to clear the REPL screen"
 ([ n ] (let [ ls (map (fn[_] (println \formfeed)) (range 1 n)) 
           _ (doall ls)   ] nil))
 ([] (cls 16)))
 
+
 (defn show-cp 
 "Shows system classpath elements"
 []
   (let [ cp (. (System/getProperties) getProperty "java.class.path") ]
     (println (apply str (interpose "\n" (. cp split ":"))))))
+
+
+(defn reverse-map
+"Yields a hash map with m's values and keys inverted. Should not be used if
+m is not one-to-one correpondance.
+"
+[ m ]
+  (let [ vks (map #(list (val %) (key %)) m) ]
+    (apply hash-map (flatten vks))))
+
 
 (defn print-header
 "Outputs a header and message with surrounding padding, to the console."
