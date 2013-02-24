@@ -17,13 +17,15 @@
 (def document (atom nil))
 
 (defn get-document-sentences
-[]
+([ s_atom filepath]
   (do
-    (if (nil? @document)
-        (swap! document (fn [ v ] (if (not (nil? v)) v
-                                        (let [ txt (str-from-file DATA_FIL) ]
+    (if (nil? @s_atom)
+        (swap! s_atom (fn [ v ] (if (not (nil? v)) v
+                                        (let [ txt (str-from-file filepath) ]
                                           (sentences txt SPLIT-PL false))))))
-    @document))
+    @s_atom))
+([]
+  (get-document-sentences document DATA_FIL)))
                  
 (defn show-sentences
 [ txt grammar? test-name msg]

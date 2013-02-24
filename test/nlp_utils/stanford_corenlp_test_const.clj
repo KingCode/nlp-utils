@@ -10,6 +10,10 @@ Naming Conventions:
 ")
 
 (def DATA_FIL "test/data/financial-lnkd.txt")
+(def DATA_FIL2 "test/data/financial-goog-2012-q4.txt")
+(def DATA_FIL3 "test/data/financial-gs-2012-q4.txt")
+
+
 
 (def PART "an increase of 81%")
 (def PART-1 "compared to $167.7 million in the fourth quarter of 2011.")
