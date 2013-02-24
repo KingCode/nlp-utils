@@ -12,7 +12,8 @@ Naming Conventions:
 (def DATA_FIL "test/data/financial-lnkd.txt")
 (def DATA_FIL2 "test/data/financial-goog-2012-q4.txt")
 (def DATA_FIL3 "test/data/financial-gs-2012-q4.txt")
-
+(def DATA_FIL4 "test/data/financial-td-2012-q4.txt")
+(def DATA_FIL5 "test/data/financial-xom-2012-q4.txt")
 
 
 (def PART "an increase of 81%")

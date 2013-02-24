@@ -50,6 +50,12 @@ m is not one-to-one correpondance.
     (apply hash-map (flatten vks))))
 
 
+(defn print-coll
+" For each coll element, prints header followed the element 0-based position, then the
+element itself"
+[ coll header sep ]
+  (doall (map #(println (str header %2 sep %1)) coll (range 0 (count coll))))) 
+
 (defn print-header
 "Outputs a header and message with surrounding padding, to the console."
 [ hdr msg padding ]

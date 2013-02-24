@@ -7,6 +7,8 @@
 
 (def goog_corp (atom nil))
 (def gs_corp (atom nil))
+(def td_corp (atom nil))
+(def xom_corp (atom nil))
 
 (defn test-filter-1
 [ test-name msg corpus ]
@@ -34,3 +36,10 @@
   (testing "Verifying pass one filtering 3"
     (test-filter-1 "filter-1-test_3" "Trimming GS" (get-document-sentences gs_corp DATA_FIL3))))
   
+(deftest filter-1-test_4
+  (testing "Verifying pass one filtering 4"
+    (test-filter-1 "filter-1-test_4" "Trimming TD" (get-document-sentences td_corp DATA_FIL4))))
+
+(deftest filter-1-test_5
+  (testing "Verifying pass one filtering 5"
+    (test-filter-1 "filter-1-test_5" "Trimming XOM" (get-document-sentences xom_corp DATA_FIL5))))

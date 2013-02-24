@@ -98,6 +98,12 @@
         (.prettyPrint pln ann System/out)
         (ftr "annotated-pipeline-test-sentencesFromFile")
 )))
+
+
+(defn pr-sents 
+[ sents ]
+  (print-coll sents "\n\nSENTENCE: " "\n"))
+
                  
 (deftest sentences-test
   (testing "Should parse entire document body and return a list of sentences"
