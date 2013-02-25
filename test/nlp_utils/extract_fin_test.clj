@@ -19,7 +19,8 @@
     (is (< siz (count corpus)))
     (hdr test-name msg)
     (println "INITIAL NUM SENTENCES: " init-siz "\nAFTER FILTER: " siz
-             "\nRETAINED CONTENT:\n\n" (interpose "\n\n" trimmed))
+;;             "\nRETAINED CONTENT:\n\n" (interpose "\n\n" trimmed))
+             "\nRETAINED CONTENT:\n\n" (format-all trimmed "\n\n>>" "\n\t\t>"))
     (ftr test-name)))
 
 
