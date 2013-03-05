@@ -60,3 +60,23 @@ element itself"
 "Outputs a header and message with surrounding padding, to the console."
 [ hdr msg padding ]
   (println (str "\n" padding hdr msg padding "\n")))
+
+(defn search
+"Yields a seq of indexes of the elements in coll matching search according to f.
+ f must be a binary predicate taking the collection element and search, resp.
+"
+[ coll search f]
+  (let [ matches (map #(if (f %1 search) %2 nil) coll (range 0 (count coll)))
+       ]
+     (filter #(not (nil? %)) matches)))
+
+(defn which-startWith
+"Yields a seq of indexes of the strings in coll which start with what."
+[ coll what ]
+  (search coll what #(.startsWith %1 %2)))
+
+(defn which-match
+"Yields a seq of indexes of the strings in coll which have a match for regex."
+[ coll regex ]
+  (search coll regex #(re-seq %2 %1)))
+

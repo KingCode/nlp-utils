@@ -70,8 +70,10 @@ each enum item is prefixed with enum-sep."
       txt ))
 
 (defn format-all
-"Formats sentence txt, prefixing with sent-sep. If a sentence is an enumeration,
-each enum item is prefixed with enum-sep."
+"Takes a collection of sentences' text and formats it into a reader friendly string, 
+prefixing each sentence with sent-sep. If a sentence is an enumeration, each enum 
+item is prefixed with enum-sep.
+"
 [ sentxt sent-sep enum-sep ]
   (let [ fmt1 (map #(format-sent % enum-sep) sentxt) 
          fmt2 (interpose sent-sep fmt1) ]
