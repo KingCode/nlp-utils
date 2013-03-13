@@ -3,6 +3,12 @@
            (java.util Properties)
            (org.apache.commons.io FileUtils)))
 
+(defmacro foreach [[sym coll] & body]
+  `(loop [coll# ~coll]
+      (when-let [[~sym & xs#] (seq coll#)]
+                  ~@body
+           (recur xs#))))
+
 (defn file?
 "Yields true if o is an instance of java.io.File; false otherwise"
 [ o ] (= File (class o)))
@@ -79,4 +85,11 @@ element itself"
 "Yields a seq of indexes of the strings in coll which have a match for regex."
 [ coll regex ]
   (search coll regex #(re-seq %2 %1)))
+
+(defn matches
+"Yields a lazy seq of all elements of coll which match regex."
+[ coll regex ]
+  (let [ idx (which-match coll regex) ]
+    (map #(nth coll %) idx))) 
+
 

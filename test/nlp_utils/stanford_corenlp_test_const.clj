@@ -14,7 +14,7 @@ Naming Conventions:
 (def DATA_FIL3 "test/data/financial-gs-2012-q4.txt")
 (def DATA_FIL4 "test/data/financial-td-2012-q4.txt")
 (def DATA_FIL5 "test/data/financial-xom-2012-q4.txt")
-
+(def DATA_FIL6 "test/data/so.txt")
 
 (def PART "an increase of 81%")
 (def PART-1 "compared to $167.7 million in the fourth quarter of 2011.")

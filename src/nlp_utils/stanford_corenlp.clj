@@ -10,6 +10,10 @@
                            CoreAnnotations$SentencesAnnotation)
     (edu.stanford.nlp.pipeline StanfordCoreNLP Annotation)
     (edu.stanford.nlp.trees Tree TreeCoreAnnotations TreeCoreAnnotations$TreeAnnotation)
+    (edu.stanford.nlp.trees.semgraph SemanticGraphCoreAnnotations
+                                     SemanticGraphCoreAnnotations$BasicDependenciesAnnotation
+                                     SemanticGraphCoreAnnotations$CollapsedDependenciesAnnotation
+                                     SemanticGraphCoreAnnotations$CollapsedCCProcessedDependenciesAnnotation)
     (edu.stanford.nlp.util CoreMap)))
 
 (defn select-tokens
@@ -60,19 +64,33 @@ Annotation is assumed to have been initialized. See new-pipeline for constraints
 
 (defn annotated-for
 "Yields a seq of core maps (edu.stanford.nlp.util.CoreMap) resuting from content annotated by pipeline.
-The pipeline is assumed to be configured to annotate for a vtype-class annotation.
+The pipeline is assumed to be configured to annotate for an atype-class annotation.
 "
 [ content pipeline atype-class]
   (let [ ann (annotation-for content)
          _ (.annotate pipeline ann) ]
     (.get ann atype-class)))
 
-
 (defn annotated-for-sentence
 "Yields a seq of sentence core maps (edu.stanford.nlp.util.CoreMap) from text."
 [ txt pipeline ]
   (let [  ann-cl CoreAnnotations$SentencesAnnotation ]
          (annotated-for txt pipeline ann-cl))) 
+
+(defn annotated-for-collapsedCCDep
+"Yields a collapsed CC processed dependencies from the argument sentence core map."
+[ sentence ]
+  (.get sentence SemanticGraphCoreAnnotations$CollapsedCCProcessedDependenciesAnnotation))
+
+(defn annotated-for-collapsedDep
+"Yields a collapsed dependencies from the argument sentence core map."
+[ sentence ]
+  (.get sentence SemanticGraphCoreAnnotations$CollapsedDependenciesAnnotation))
+
+(defn annotated-for-basicDep
+"Yields a collapsed dependencies from the argument sentence core map."
+[ sentence ]
+  (.get sentence SemanticGraphCoreAnnotations$BasicDependenciesAnnotation))
 
 (defn tokens-ann
 "Yields a seq of token annotations from the argument sentence map"

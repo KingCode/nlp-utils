@@ -24,6 +24,8 @@
                                         (let [ txt (str-from-file filepath) ]
                                           (sentences txt SPLIT-PL false))))))
     @s_atom))
+([ filepath ]
+  (get-document-sentences (atom nil) filepath))
 ([]
   (get-document-sentences document DATA_FIL)))
                  
