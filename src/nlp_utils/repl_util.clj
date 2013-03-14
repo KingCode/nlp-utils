@@ -1,4 +1,10 @@
-(ns nlp-utils.repl-util)
+(ns nlp-utils.repl-util
+    (:use nlp-utils.stanford-corenlp)
+    (:use nlp-utils.stanford-corenlp-pool)
+    (:use nlp-utils.stanford-corenlp-test)
+    (:use nlp-utils.stanford-corenlp-test-const)
+    (:import (edu.stanford.nlp.trees.semgraph SemanticGraphFormatter))
+)
 
 (defn cls
 "Prints n-1 form feeds - default is 15. Intended to clear the REPL screen"
@@ -38,4 +44,46 @@
 []
   (let [l-str (loading) ]
     (read-string l-str)))
+
+;;FORMATTER FOR SEM. GRAPHS
+(defn semgraph-format
+"Constructs a semantic graph formatter - see edu.stanford.nlp.trees.semgraph.SemanticGraphFormatter constructor.
+ Defaults are 40 and 3 for width and indent and true for all others, except for showAnnos which has default false.
+"
+([ width indent smartIndent showRelns showTags showAnnos showIndices ]
+  (SemanticGraphFormatter. width indent smartIndent showRelns showTags showAnnos showIndices))
+([ width indent showAnnos ]
+  (semgraph-format width indent true true true showAnnos true))
+([]
+  (semgraph-format 40 3 false)))
+
+
+(defn graph-str
+"Yields a string representation of the semgraph argument, according to fmt.
+"
+[ semgraph fmt ] (. fmt formatSemanticGraph semgraph))
+
+
+(defn show-graph
+"Prints to the console a formatted string of semgraph using fmt.
+"
+[ semgraph fmt ] 
+  (let [ gstr (graph-str semgraph fmt)]
+    (println gstr)))
+
+
+(defn get-CCdeps
+"Yields the CC collapsed dependencies for the argument sentence txt."
+[ txt ]
+  (let [ sent (first (annotated-for-sentence txt PARSE-PL)) ]
+    (annotated-for-collapsedCCDep sent)))
+
+
+;;DATA SETUPS
+(defn get-div-CCdeps
+"Yields the CC collapsed dependencies from a data sample"
+[]
+(let [ txt (nth (get-document-sentences DATA_FIL6) 0)
+       sent (nth (annotated-for-sentence txt PARSE-PL) 0) ]
+  (annotated-for-collapsedCCDep sent)))
 
