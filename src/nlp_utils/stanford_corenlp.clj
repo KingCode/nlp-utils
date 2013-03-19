@@ -7,7 +7,8 @@
     (edu.stanford.nlp.ling CoreAnnotations 
                            CoreAnnotations$TokensAnnotation
                            CoreAnnotations$TextAnnotation 
-                           CoreAnnotations$SentencesAnnotation)
+                           CoreAnnotations$SentencesAnnotation
+                           CoreAnnotations$NormalizedNamedEntityTagAnnotation)
     (edu.stanford.nlp.pipeline StanfordCoreNLP Annotation)
     (edu.stanford.nlp.trees Tree TreeCoreAnnotations TreeCoreAnnotations$TreeAnnotation)
     (edu.stanford.nlp.trees.semgraph SemanticGraphCoreAnnotations

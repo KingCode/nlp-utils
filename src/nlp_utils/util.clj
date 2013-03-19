@@ -3,7 +3,14 @@
            (java.util Properties)
            (org.apache.commons.io FileUtils)))
 
-(defmacro foreach [[sym coll] & body]
+(defn in?
+"Yields true if x is in coll, false otherwise."
+[coll x] (if (some #{x} coll) true false))
+
+
+(defmacro foreach
+"For each element of coll, executes body with sym bound to the element."
+ [[sym coll] & body]
   `(loop [coll# ~coll]
       (when-let [[~sym & xs#] (seq coll#)]
                   ~@body

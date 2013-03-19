@@ -1,4 +1,6 @@
 (ns nlp-utils.repl-util
+    (:use [clojure.set :only [difference]])
+    (:use nlp-utils.util)
     (:use nlp-utils.stanford-corenlp)
     (:use nlp-utils.stanford-corenlp-pool)
     (:use nlp-utils.stanford-corenlp-test)
@@ -20,6 +22,23 @@
     (println (apply str (interpose "\n" (. cp split ":"))))))
 
 
+(defn show-vars
+([ ns exclude]
+  (let [ interned (ns-interns ns)
+         selector #(let [ v (val %)
+                          k-str (str (key %)) ] 
+                     (and (not (in? exclude v)) 
+                          (not (.startsWith k-str "user.proxy$java.lang.Object$"))))
+         selected (filter selector interned) 
+         items (map #(key %) selected) ]
+     (foreach [it (sort items)] (println "\t" it))))
+([ exclude ]
+  (show-vars 'user exclude))
+([] 
+  (show-vars [ #'user/cdoc #'user/sourcery #'user/help 
+               #'user/clojuredocs #'user/set-signal-handler!])))
+
+
 (defn- loading
 "Outputs a string for a form which loads some needed modules and imports into current namespace.
  Used by loading-form.
@@ -32,7 +51,9 @@
      (use 'nlp-utils.stanford-corenlp :reload)
      (use 'nlp-utils.stanford-corenlp-test-const :reload)
      (use 'nlp-utils.stanford-corenlp-test :reload)
-     (import (edu.stanford.nlp.trees.semgraph SemanticGraph)
+     (import 
+             (edu.stanford.nlp.ling CoreAnnotations CoreAnnotations$NormalizedNamedEntityTagAnnotation)
+             (edu.stanford.nlp.trees.semgraph SemanticGraph)
              (edu.stanford.nlp.semgrex SemgrexPattern SemgrexMatcher)
              (edu.stanford.nlp.trees GrammaticalRelation)
              (edu.stanford.nlp.ling IndexedWord)))")
@@ -80,10 +101,20 @@
 
 
 ;;DATA SETUPS
-(defn get-div-CCdeps
-"Yields the CC collapsed dependencies from a data sample"
+(defn get-div-CCdeps_SO
+"Yields the CC collapsed dependencies from Southern data sample"
 []
-(let [ txt (nth (get-document-sentences DATA_FIL6) 0)
-       sent (nth (annotated-for-sentence txt PARSE-PL) 0) ]
-  (annotated-for-collapsedCCDep sent)))
+  (let [ txt (nth (get-document-sentences DATA_FIL6) 0)
+         sent (nth (annotated-for-sentence txt PARSE-PL) 0) ]
+     (annotated-for-collapsedCCDep sent)))
 
+(defn get-CCdeps-from-file
+"Yields the CC collapsed dependencies from GAP data sample"
+[ file ]
+  (let [ all-txt (get-document-sentences file)
+         all-sents (map #(annotated-for-sentence % PARSE-PL) all-txt) ]
+    (map #(annotated-for-collapsedCCDep (first %)) all-sents)))
+
+(defn get-div-CCdeps-GAP
+[]
+  (get-CCdeps-from-file DATA_FIL7)) 
