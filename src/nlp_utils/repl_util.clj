@@ -35,7 +35,7 @@
 ([ exclude ]
   (show-vars 'user exclude))
 ([] 
-  (show-vars [ #'user/cdoc #'user/sourcery #'user/help 
+  (show-vars [ #'user/cdoc #'user/sourcery #'user/help #'user/defn
                #'user/clojuredocs #'user/set-signal-handler!])))
 
 
