@@ -70,6 +70,8 @@ If ner-re is not provided the NNE tag annotation for the node is returned withou
 
 
 (defn nne-tags-from-edge
+"Yields normalized named entities from edge's nodes if (.ner node) matches ner-re.
+"
 ([ edge ner-re ]
   (let [ nodes [(.getGovernor edge) (.getDependent edge)] 
          sel-nodes (filter #(.matches (.ner %) ner-re) nodes) ]
