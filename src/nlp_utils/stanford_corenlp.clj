@@ -72,21 +72,28 @@ The pipeline is assumed to be configured to annotate for an atype-class annotati
          _ (.annotate pipeline ann) ]
     (.get ann atype-class)))
 
+
 (defn annotated-for-sentence
 "Yields a seq of sentence core maps (edu.stanford.nlp.util.CoreMap) from text."
 [ txt pipeline ]
   (let [  ann-cl CoreAnnotations$SentencesAnnotation ]
          (annotated-for txt pipeline ann-cl))) 
 
+(comment MOVE THIS OUT OF HERE!!
 (defn annotated-for-collapsedCCDep
-"Yields a collapsed CC processed dependencies from the argument sentence core map."
+"Yields a collapsed CC processed dependencies from the argument sentence, which must be either a single
+text sentence, or a core map thereof."
 [ sentence ]
-  (.get sentence SemanticGraphCoreAnnotations$CollapsedCCProcessedDependenciesAnnotation))
+  (let [ coremap (if (= String (class sentence)) (annotated-for-sentence sentence PARSE-PL) sentence) ]
+  (.get coremap SemanticGraphCoreAnnotations$CollapsedCCProcessedDependenciesAnnotation)))
+)
+
 
 (defn annotated-for-collapsedDep
 "Yields a collapsed dependencies from the argument sentence core map."
 [ sentence ]
   (.get sentence SemanticGraphCoreAnnotations$CollapsedDependenciesAnnotation))
+
 
 (defn annotated-for-basicDep
 "Yields a collapsed dependencies from the argument sentence core map."

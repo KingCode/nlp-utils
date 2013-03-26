@@ -2,21 +2,35 @@
 (:import (edu.stanford.nlp.ling CoreAnnotations 
                                 CoreAnnotations$NormalizedNamedEntityTagAnnotation
                                 CoreAnnotations$OriginalTextAnnotation
-                                CoreAnnotations$TextAnnotation )
+                                CoreAnnotations$TextAnnotation 
+                                IndexedWord)
+         (edu.stanford.nlp.trees.semgraph SemanticGraph)
          (edu.stanford.nlp.semgrex SemgrexPattern SemgrexMatcher)))
+
+
+(defn filter-edges-reln
+"Filters edges, keeping only those having a grammatical relation matching reln-re."
+[ edges reln-re ]
+  (filter #(.matches (.toString (.getRelation %)) reln-re) edges))
+
 
 (defn get-edges
 "Yields the graph's edges bearing a relation matching reln-re and having node as the dependent 
-if incoming? is true, or as governor otherwise. If node is not provided the same query is made 
+if incoming? is true, or as governor otherwise. If incoming? is not provided, all edges matching reln-re
+and containing node as both governor and dependent are returned. If node is not provided the same query is made 
 against all edges in graph.
 " 
-([ graph node reln-re incoming?]
+([ ^SemanticGraph graph ^IndexedWord node ^String reln-re ^Boolean incoming?]
     (let [ edges (if incoming? (.getIncomingEdgesSorted graph node) 
                                (.getOutEdgesSorted graph node) )    ]
        (filter #(.matches (.toString (.getRelation %)) reln-re) edges)))
-([ graph reln-re]
+([ ^SemanticGraph graph ^IndexedWord node ^String reln-re ]
+    (let [ in-edges (get-edges graph node reln-re true) 
+           out-edges (get-edges graph node reln-re false) ]
+        (concat in-edges out-edges)))
+([ ^SemanticGraph graph ^String reln-re]
    (let [ edges (.getEdgeSet graph) ]
-       (filter #(.matches (.toString (.getRelation %)) reln-re) edges))))
+     (filter-edges-reln edges reln-re))))
 
 
 (defn get-out-edges
@@ -33,6 +47,7 @@ against all edges in graph.
   (get-edges graph node reln-re true))
 ([ graph node ]
   (get-in-edges graph node ".*")))
+
 
 
 (defn money?
@@ -62,19 +77,31 @@ If ner-re is not provided the NNE tag annotation for the node is returned withou
   (nne-tag node ".*")))
 
 
+
 (defn get-money
-"Yields the full monetary expression node is part of, using its NER attr." 
+"Yields the normalized monetary value for node, using its NER attr." 
 [ node ]
     (if (money? node)
       (nne-tag node)))
+
+
+
+(defn nodes-from-edge
+"Yields one or both nodes in edge having named entities matching ner-re, or both nodes if 
+ner-re is not provided."
+([ edge ner-re ]
+  (let [ nodes [(.getGovernor edge) (.getDependent edge)] ]
+    (filter #(.matches (.ner %) ner-re) nodes)))
+([ edge ]
+  (nodes-from-edge edge ".*"))) 
+
 
 
 (defn nne-tags-from-edge
 "Yields normalized named entities from edge's nodes if (.ner node) matches ner-re.
 "
 ([ edge ner-re ]
-  (let [ nodes [(.getGovernor edge) (.getDependent edge)] 
-         sel-nodes (filter #(.matches (.ner %) ner-re) nodes) ]
+  (let [ sel-nodes (nodes-from-edge edge ner-re) ] 
     (map #(nne-tag %) sel-nodes)))
 ([ edge ]
   (nne-tags-from-edge edge ".*"))) 
@@ -83,6 +110,7 @@ If ner-re is not provided the NNE tag annotation for the node is returned withou
 (def ATTRS_RE "{lemma:dividend}")
 (def ATTRS_P (SemgrexPattern/compile ATTRS_RE))
 
+
 (defn matched-nodes
 "Yields a seq of all nodes in graph whose text matches attributes according to ATTRS_RE."
 ([ matcher results]
@@ -90,6 +118,7 @@ If ner-re is not provided the NNE tag annotation for the node is returned withou
     (recur matcher (conj results (.getMatch matcher)))))
 ([ graph ]
   (matched-nodes (.matcher ATTRS_P graph) [])))
+
      
 (defn nodes-text
 "Yields the text annotation or if orig? is true, the original text from the node if a single node,

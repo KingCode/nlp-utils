@@ -109,7 +109,8 @@
      (annotated-for-collapsedCCDep sent)))
 
 (defn get-CCdeps-from-file
-"Yields the CC collapsed dependencies from GAP data sample"
+"Yields a seq of the CC collapsed dependencies for each parsed sentence of the text in 'file' filepath.
+"
 [ file ]
   (let [ all-txt (get-document-sentences file)
          all-sents (map #(annotated-for-sentence % PARSE-PL) all-txt) ]
