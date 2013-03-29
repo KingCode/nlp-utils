@@ -2,8 +2,9 @@
   (:use nlp-utils.stanford-corenlp-const nlp-utils.util)
   (:import 
     (java.io PrintWriter) 
-    (java.util List)
+    (java.util List Properties)
     (edu.stanford.nlp.io IOUtils)
+    (edu.stanford.nlp.util CoreMap)
     (edu.stanford.nlp.ling CoreAnnotations 
                            CoreAnnotations$TokensAnnotation
                            CoreAnnotations$TextAnnotation 
@@ -11,7 +12,8 @@
                            CoreAnnotations$NormalizedNamedEntityTagAnnotation)
     (edu.stanford.nlp.pipeline StanfordCoreNLP Annotation)
     (edu.stanford.nlp.trees Tree TreeCoreAnnotations TreeCoreAnnotations$TreeAnnotation)
-    (edu.stanford.nlp.trees.semgraph SemanticGraphCoreAnnotations
+    (edu.stanford.nlp.trees.semgraph SemanticGraph 
+                                     SemanticGraphCoreAnnotations
                                      SemanticGraphCoreAnnotations$BasicDependenciesAnnotation
                                      SemanticGraphCoreAnnotations$CollapsedDependenciesAnnotation
                                      SemanticGraphCoreAnnotations$CollapsedCCProcessedDependenciesAnnotation)
@@ -37,28 +39,28 @@
        ]
      (Annotation. txt))))
 
-(defn new-pipeline
+(defn ^StanfordCoreNLP new-pipeline
 "Constructs a new StanfordCoreNLP pipeline with props if provided, or the default properties otherwise.
 If provided props must be a Properties, or a classpath relative propeties file path without the file extension.
 "
-([ props ]
+([ ^Properties props ]
   (if props (StanfordCoreNLP. props) (StanfordCoreNLP.))) 
 ([]
   (new-pipeline nil)))
 
-(defn annotated-pipeline
+(defn ^StanfordCoreNLP annotated-pipeline
 "Constructs a pipeline using fn new-pipeline with props and invokes pipeline.annotate( annotation).
 Annotation is assumed to have been initialized. See new-pipeline for constraints on props.
 "
-([ annotation props ]
+([ ^Annotation annotation ^Properties props ]
   (let [ pl (new-pipeline props) ] 
     (. pl annotate annotation)
     pl)) 
-([ annotation ] (annotated-pipeline annotation nil)))   
+([ ^Annotation annotation ] (annotated-pipeline annotation nil)))   
 
-(defn text-of
+(defn ^String text-of
 "Yields the text for the argument core map (edu.stanford.nlp.util.CoreMap)"
-[ coremap ] 
+[ ^CoreMap coremap ] 
   (do ;;(println "text-of: arg is" coremap)
   (.get coremap CoreAnnotations$TextAnnotation)))  
 
@@ -67,7 +69,7 @@ Annotation is assumed to have been initialized. See new-pipeline for constraints
 "Yields a seq of core maps (edu.stanford.nlp.util.CoreMap) resuting from content annotated by pipeline.
 The pipeline is assumed to be configured to annotate for an atype-class annotation.
 "
-[ content pipeline atype-class]
+[ ^String content ^StanfordCoreNLP pipeline ^Class atype-class]
   (let [ ann (annotation-for content)
          _ (.annotate pipeline ann) ]
     (.get ann atype-class)))
@@ -75,34 +77,33 @@ The pipeline is assumed to be configured to annotate for an atype-class annotati
 
 (defn annotated-for-sentence
 "Yields a seq of sentence core maps (edu.stanford.nlp.util.CoreMap) from text."
-[ txt pipeline ]
+[ ^String txt ^StanfordCoreNLP pipeline ]
   (let [  ann-cl CoreAnnotations$SentencesAnnotation ]
          (annotated-for txt pipeline ann-cl))) 
 
-(comment MOVE THIS OUT OF HERE!!
-(defn annotated-for-collapsedCCDep
-"Yields a collapsed CC processed dependencies from the argument sentence, which must be either a single
-text sentence, or a core map thereof."
-[ sentence ]
-  (let [ coremap (if (= String (class sentence)) (annotated-for-sentence sentence PARSE-PL) sentence) ]
-  (.get coremap SemanticGraphCoreAnnotations$CollapsedCCProcessedDependenciesAnnotation)))
-)
+
+(defn ^SemanticGraph annotated-for-collapsedCCDep
+"Yields a collapsed CC processed dependencies from the argument sentence core map."
+[ ^CoreMap sentence ]
+ ;; (let [ coremap (if (= String (class sentence)) (annotated-for-sentence sentence PARSE-PL) sentence) ]
+  (.get sentence SemanticGraphCoreAnnotations$CollapsedCCProcessedDependenciesAnnotation))
 
 
-(defn annotated-for-collapsedDep
+
+(defn ^SemanticGraph annotated-for-collapsedDep
 "Yields a collapsed dependencies from the argument sentence core map."
-[ sentence ]
+[ ^CoreMap sentence ]
   (.get sentence SemanticGraphCoreAnnotations$CollapsedDependenciesAnnotation))
 
 
-(defn annotated-for-basicDep
+(defn ^SemanticGraph annotated-for-basicDep
 "Yields a collapsed dependencies from the argument sentence core map."
-[ sentence ]
+[ ^CoreMap sentence ]
   (.get sentence SemanticGraphCoreAnnotations$BasicDependenciesAnnotation))
 
 (defn tokens-ann
 "Yields a seq of token annotations from the argument sentence map"
-[sentence]
+[ ^CoreMap sentence]
  (let [ toktype CoreAnnotations$TokensAnnotation ]
     (.get sentence toktype)))
 
@@ -112,7 +113,7 @@ text sentence, or a core map thereof."
  If none are specified, all available attributes are collected (as per TOKEN_IDS).
  If provided,  attrs must be a String[] with values found in TOK_MAP. 
 "
-([ sentence attrs-arg ]
+([ ^CoreMap sentence attrs-arg ]
   (let [ attrs (if (nil? attrs-arg) TOKEN_IDS attrs-arg)
          toktype CoreAnnotations$TokensAnnotation
          tokens (.get sentence toktype) ]

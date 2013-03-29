@@ -61,7 +61,7 @@
 
 (defn show-annotated-pipeline
 [ txt label]
-(let [ ann (annotation-for txt)
+  (let [ ann (annotation-for txt)
        props (props-for {CONFIG_ANN "tokenize, ssplit, pos, lemma, ner"})
        pln (annotated-pipeline ann props) 
      ]

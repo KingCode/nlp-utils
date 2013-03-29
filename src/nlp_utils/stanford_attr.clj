@@ -44,16 +44,6 @@ matching reln-re. The node's normalized text is returned.
   (first (attr-in-reln graph "MONEY" "prep_to")))
 
 
-(defn ^String year-in-money_from-prototype
-"Yields a normalized value for the first found year expression associated with a money expression, itself in a
-'from' relationship."
-[ ^SemanticGraph graph ]
-  (let [ money-node (first (money-from graph))
-         money-edges (get-edges graph money-node "prep_in")
-         dates (map #(nne-tags-from-edge % "DATE") money-edges) ]
-    (first dates)))
-
-
 (defn ^String related-value
 "Yields a normalized value for the first found node part of a relation reln-re in graph, and having 
 its named entity matching related-ner-re, having a relation matching related-reln-re with 
@@ -61,12 +51,23 @@ the first found node having a named entity matching ner-re and part of a relatio
 [ ^SemanticGraph graph ^String ner-re ^String reln-re ^String related-ner-re ^String related-reln-re]
   (let [ main-node (first (nodes-in-reln graph ner-re reln-re))
          related-edges (get-edges graph main-node related-reln-re)
-         values (map #(nne-tags-from-edge % related-ner-re) related-edges) ]
+         values (mapcat #(nne-tags-from-edge % related-ner-re) related-edges) ]
      (first values)))
 
 
-(defn ^String year-in-money-from
+(defn ^String date-in-money-from
 "Yields a normalized value for the first found year expression associated with a money expression, itself in a
 'from' relationship."
 [ ^SemanticGraph graph ]
   (related-value graph "MONEY" "prep_from" "DATE" "prep_in"))
+
+
+
+(defn ^String date-in-money-to
+"Yields a normalized value for the first found year expression associated with a money expression, itself in a
+'to' relationship."
+[ ^SemanticGraph graph ]
+  (related-value graph "MONEY" "prep_to" "DATE" "prep_in"))
+
+
+
