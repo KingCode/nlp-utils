@@ -4,17 +4,10 @@
   (:import 
     (edu.stanford.nlp.ling IndexedWord
                            CoreAnnotations
-                           CoreAnnotations$CharacterOffsetBeginAnnotation
                            CoreAnnotations$NormalizedNamedEntityTagAnnotation)
     (edu.stanford.nlp.trees.semgraph SemanticGraph)
     (java.util.regex Pattern))) 
 
-(def begin-idx-comp 
-   (comparator
-     (fn [^IndexedWord a ^IndexedWord b]
-        (let [ a-start (.get a CoreAnnotations$CharacterOffsetBeginAnnotation)
-               b-start (.get b CoreAnnotations$CharacterOffsetBeginAnnotation) ]
-          (if (< a-start b-start) -1 1)))))
 
 (defn nodes-in-reln
 "Yields the nodes whose named entity matches ner-re from an edge bearing a relation
@@ -109,7 +102,7 @@ continuous text."
 "Sorts the argument nodes by order of appearance of their corresponding text value
 and returns their concatenated value."
 [ nodes ]
-  (let [ sorted-nodes (sort begin-idx-comp nodes) 
+  (let [ sorted-nodes (sort #(compare (.beginPosition %1) (.beginPosition %2)) nodes)
          as-sorted-txt (map #(nodes-text %) sorted-nodes)
          txt-and-seps (interpose " " as-sorted-txt) ]
      (apply str txt-and-seps)))
