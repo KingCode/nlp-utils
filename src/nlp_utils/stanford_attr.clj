@@ -102,7 +102,7 @@ continuous text."
 "Sorts the argument nodes by order of appearance of their corresponding text value
 and returns their concatenated value."
 [ nodes ]
-  (let [ sorted-nodes (sort #(compare (.beginPosition %1) (.beginPosition %2)) nodes)
+  (let [ sorted-nodes (sort compare-by-beginPos nodes)
          as-sorted-txt (map #(nodes-text %) sorted-nodes)
          txt-and-seps (interpose " " as-sorted-txt) ]
      (apply str txt-and-seps)))
@@ -149,3 +149,17 @@ of appearance."
 
 ([ ^SemanticGraph graph ]
   (org graph nil)))
+
+
+(defn dividend-nodes
+"Yields a seq of all nodes in graph whose text has 'dividend' as lemma."
+[ graph ]
+    (matched-nodes (dividend-matcher graph)))
+
+
+;;(defn ^Boolean quarterly-dividend?
+;;"Returns true if the dividend is found in graph (if divnode not provided) and has a quarterly modifier or
+;;similar qualifier attached; false otherwise. If provided divnode must be the node bearing 'dividend' as its lemma
+;;tag within graph."
+;;([ ^SemanticGraph graph ^IndexedWord divnode ]
+ ;;   (let [ node (if (nil? divnode) 

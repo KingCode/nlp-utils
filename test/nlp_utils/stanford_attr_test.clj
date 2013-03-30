@@ -53,6 +53,17 @@
     (is (= "NYSE:GPS" (org gap1-deps gap1)))
     (is (= "Gap Inc. NYSE" (org gap1-deps)))))
 
+
+(deftest dividend-test-GAP
+  (testing "GAP: Should detect dividend node"
+     (let [ div-nodes1 (dividend-nodes gap1-deps) 
+            div-nodes2 (dividend-nodes gap1-deps) ]
+       (is (not (nil? div-nodes1)))
+       (is (not (nil? div-nodes2)))
+       (is (= 1 (count div-nodes1)))
+       (is (= 1 (count div-nodes2))))))
+            
+    
 ;;;;;;;;;;;;;;;;;;;;;;;;; HBHC ;;;;;;;;;;;;;;;;;
 (deftest money-of-test
   (testing "Should return a monetary amount which is part of an 'of' preposition relationship"
@@ -64,6 +75,11 @@
     (is (= "Nasdaq:HBHC" (org hbhc1-deps hbhc1)))
     (is (= "Hancock Holding Company" (org hbhc1-deps)))))
  
-
-
-
+(deftest dividend-test-HBHC
+  (testing "HBHC: Should detect dividend node"
+     (let [ div-nodes1 (dividend-nodes hbhc1-deps) 
+            div-nodes2 (dividend-nodes hbhc2-deps) ]
+       (is (not (nil? div-nodes1)))
+       (is (not (nil? div-nodes2)))
+       (is (= 1 (count div-nodes1)))
+       (is (= 1 (count div-nodes2))))))

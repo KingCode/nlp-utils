@@ -8,6 +8,12 @@
          (edu.stanford.nlp.semgrex SemgrexPattern SemgrexMatcher)))
 
 
+(defn compare-by-beginPos
+"Yields the result of comparing a and b based on their beginPosition property value."
+[ ^IndexedWord a ^IndexedWord b ]
+    (compare (.beginPosition a) (.beginPosition b)))
+
+
 (defn filter-edges-reln
 "Filters edges, keeping only those having a grammatical relation matching reln-re."
 [ edges reln-re ]
@@ -111,20 +117,26 @@ ner-re is not provided."
   (nne-tags-from-edge edge ".*"))) 
 
 
-(def ATTRS_RE "{lemma:dividend}")
-(def ATTRS_P (SemgrexPattern/compile ATTRS_RE))
+(def DIVIDEND_RE "{lemma:dividend}")
+(def DIVIDEND_P (SemgrexPattern/compile DIVIDEND_RE))
 
 (def ORG_RE "{ner:ORGANIZATION}")
 (def ORG_P (SemgrexPattern/compile ORG_RE))
 
 
+(defn dividend-matcher
+"Yields a dividend matcher for graph."
+[ graph ]
+  (.matcher DIVIDEND_P graph))
+
+
 (defn matched-nodes
-"Yields a seq of all nodes in graph whose text matches attributes according to ATTRS_RE."
+"Yields match results in matcher."
 ([ matcher results]
   (if (not (.find matcher)) results
     (recur matcher (conj results (.getMatch matcher)))))
-([ graph ]
-  (matched-nodes (.matcher ATTRS_P graph) [])))
+([ matcher ]
+  (matched-nodes matcher [])))
 
 
 (defn matched-org
