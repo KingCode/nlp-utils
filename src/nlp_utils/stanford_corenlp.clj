@@ -39,6 +39,7 @@
        ]
      (Annotation. txt))))
 
+
 (defn ^StanfordCoreNLP new-pipeline
 "Constructs a new StanfordCoreNLP pipeline with props if provided, or the default properties otherwise.
 If provided props must be a Properties, or a classpath relative propeties file path without the file extension.
@@ -47,6 +48,7 @@ If provided props must be a Properties, or a classpath relative propeties file p
   (if props (StanfordCoreNLP. props) (StanfordCoreNLP.))) 
 ([]
   (new-pipeline nil)))
+
 
 (defn ^StanfordCoreNLP annotated-pipeline
 "Constructs a pipeline using fn new-pipeline with props and invokes pipeline.annotate( annotation).
@@ -57,6 +59,7 @@ Annotation is assumed to have been initialized. See new-pipeline for constraints
     (. pl annotate annotation)
     pl)) 
 ([ ^Annotation annotation ] (annotated-pipeline annotation nil)))   
+
 
 (defn ^String text-of
 "Yields the text for the argument core map (edu.stanford.nlp.util.CoreMap)"

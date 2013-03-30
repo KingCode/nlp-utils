@@ -2,9 +2,19 @@
   (:use nlp-utils.util)
   (:use nlp-utils.stanford-semgraph)
   (:import 
-  (edu.stanford.nlp.ling CoreAnnotations CoreAnnotations$NormalizedNamedEntityTagAnnotation)
-  (edu.stanford.nlp.trees.semgraph SemanticGraph))) 
+    (edu.stanford.nlp.ling IndexedWord
+                           CoreAnnotations
+                           CoreAnnotations$CharacterOffsetBeginAnnotation
+                           CoreAnnotations$NormalizedNamedEntityTagAnnotation)
+    (edu.stanford.nlp.trees.semgraph SemanticGraph)
+    (java.util.regex Pattern))) 
 
+(def begin-idx-comp 
+   (comparator
+     (fn [^IndexedWord a ^IndexedWord b]
+        (let [ a-start (.get a CoreAnnotations$CharacterOffsetBeginAnnotation)
+               b-start (.get b CoreAnnotations$CharacterOffsetBeginAnnotation) ]
+          (if (< a-start b-start) -1 1)))))
 
 (defn nodes-in-reln
 "Yields the nodes whose named entity matches ner-re from an edge bearing a relation
@@ -69,5 +79,80 @@ the first found node having a named entity matching ner-re and part of a relatio
 [ ^SemanticGraph graph ]
   (related-value graph "MONEY" "prep_to" "DATE" "prep_in"))
 
+(def EXCH "(NYSE|Nyse|nyse|NASDAQ|Nasdaq|nasdaq|TSX|Tsx|tsx)")
+(def STOCK "[A-Z0-9]{1,6}")
+(def SEP "\\s?:\\s?")
+(def L-PARN "\\(?")
+(def R-PARN "\\)?")
+(def XTRA "(\\s*\\[.*\\]\\s*)?")
+(def STOCK_RE (str L-PARN "(" EXCH SEP STOCK "|" STOCK SEP EXCH ")"  XTRA R-PARN))
+(def STOCK_P (Pattern/compile STOCK_RE))
+
+(def SYM_P (Pattern/compile STOCK))
+(def XTRA_P (Pattern/compile XTRA))
+(def EXCH_P (Pattern/compile EXCH))
+
+(defn ^String find-stock
+"Returns the first item matching STOCK_RE regexp; coll can be either a seq of strings, or
+continuous text."
+[ c ]
+  (if (= String (class c))
+        (let [ m (.matcher STOCK_P c)
+               _ (.find m) ]
+            (.group m))
+        (first (filter #(if-let [ candidate % ]
+                            (let [matcher (. STOCK_P matcher candidate) ]
+                               (.matches matcher))) c))))
 
 
+(defn ^String txt-from-org-nodes
+"Sorts the argument nodes by order of appearance of their corresponding text value
+and returns their concatenated value."
+[ nodes ]
+  (let [ sorted-nodes (sort begin-idx-comp nodes) 
+         as-sorted-txt (map #(nodes-text %) sorted-nodes)
+         txt-and-seps (interpose " " as-sorted-txt) ]
+     (apply str txt-and-seps)))
+
+
+(defn ^String format-stock
+"Formats stock symbol into EXCHANGE:SYMBOL"
+[ stock ]
+  (let [ extra-m (.matcher XTRA_P stock)
+         _ (.find extra-m)
+         extra (.group extra-m)
+
+         exch-m (.matcher EXCH_P stock)
+         _ (.find exch-m)
+         exch (.group exch-m)
+
+         cleansed-1 (.replace stock extra "")
+         cleansed-2 (.replace cleansed-1 exch "")
+
+    ;; we got rid of the exchange first, 
+    ;;since it could match STOCK as well
+    ;;
+         sym-m (.matcher SYM_P cleansed-2)  
+         _ (.find sym-m)
+         sym (.group sym-m)   
+       ]
+    (str exch ":" sym)))
+
+      
+
+(defn ^String org
+"Yields a normalized value for the first found organization expression. If provided, txt must be the source 
+text for graph: it is used to extract the stock symbol if an organization is found in graph.
+If no stock symbol if found (either with or without source text) all organization tokens are returned by order
+of appearance."
+([ ^SemanticGraph graph txt ]
+  (let [ nodes (matched-org graph)
+         as-txt (map #(nodes-text %) nodes) 
+         stock (find-stock as-txt) ]
+    (cond stock (format-stock stock)
+          txt (if-let [ stock-from-text (find-stock txt) ] (format-stock stock-from-text)
+                        (txt-from-org-nodes nodes))
+          :else (txt-from-org-nodes nodes))))
+
+([ ^SemanticGraph graph ]
+  (org graph nil)))

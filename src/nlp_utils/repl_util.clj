@@ -1,6 +1,7 @@
 (ns nlp-utils.repl-util
     (:use [clojure.set :only [difference]])
     (:use nlp-utils.util)
+    (:use nlp-utils.stanford-attr)
     (:use nlp-utils.stanford-corenlp)
     (:use nlp-utils.stanford-corenlp-pool)
     (:use nlp-utils.stanford-corenlp-test)
@@ -46,6 +47,8 @@
 []
   "(do
      (use 'nlp-utils.util :reload)
+     (use 'nlp-utils.stanford-attr :reload)
+     (use 'nlp-utils.stanford-semgraph :reload)
      (use 'nlp-utils.stanford-corenlp-pool :reload)
      (use 'nlp-utils.stanford-corenlp-const :reload)
      (use 'nlp-utils.stanford-corenlp :reload)

@@ -64,6 +64,10 @@ against all edges in graph.
 [ node ]
   (= "DATE" (.ner node)))
 
+(defn  org?
+[ node ]
+  (= "ORGANIZATION" (.ner node)))
+
 
 (defn nne-tag
 "Yields the normalized named entity tag annotation, i.e. the 'complete' value of a money, percent, date etc.,
@@ -110,6 +114,9 @@ ner-re is not provided."
 (def ATTRS_RE "{lemma:dividend}")
 (def ATTRS_P (SemgrexPattern/compile ATTRS_RE))
 
+(def ORG_RE "{ner:ORGANIZATION}")
+(def ORG_P (SemgrexPattern/compile ORG_RE))
+
 
 (defn matched-nodes
 "Yields a seq of all nodes in graph whose text matches attributes according to ATTRS_RE."
@@ -119,17 +126,27 @@ ner-re is not provided."
 ([ graph ]
   (matched-nodes (.matcher ATTRS_P graph) [])))
 
+
+(defn matched-org
+"Yields a seq of all nodes in graph having Organization as NER tag."
+([ matcher results ]
+  (if (not (.find matcher)) results
+    (recur matcher (conj results (.getMatch matcher)))))
+([ graph ]
+  (matched-org (.matcher ORG_P graph) [])))
      
+
 (defn nodes-text
 "Yields the text annotation or if orig? is true, the original text from the node if a single node,
 or each node in a seq if n is a collection. n must be either an IndexedWord or a seq thereof.
 "
-[ n orig? ]
+([ n orig? ]
   (let [func (if orig? #(.get % CoreAnnotations$OriginalTextAnnotation) 
                         #(.get % CoreAnnotations$TextAnnotation))]
     (if (coll? n) 
         (map func n) (func n)))) 
-
+( [ n ]
+  (nodes-text n true)))
 
 (defn matched-attrs
 "Yields a seq of matched attrs in graph according to ATTRS_RE."

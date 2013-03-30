@@ -16,6 +16,10 @@ Naming Conventions:
 (def DATA_FIL5 "test/data/financial-xom-2012-q4.txt")
 (def DATA_FIL6 "test/data/so.txt")
 (def DATA_FIL7 "test/data/gap.txt")
+(def DATA_FIL8 "test/data/hbhc.txt")
+(def DATA_FIL9 "test/data/fstr.txt")
+(def DATA_FIL10 "test/data/geo.txt")
+(def DATA_FIL11 "test/data/apog.txt")
 
 (def PART "an increase of 81%")
 (def PART-1 "compared to $167.7 million in the fourth quarter of 2011.")
