@@ -47,22 +47,41 @@ matching reln-re. The node's normalized text is returned.
   (first (attr-in-reln graph "MONEY" "prep_to")))
 
 
-(defn ^String related-value
+(defn ^String related-value-ner
 "Yields a normalized value for the first found node part of a relation reln-re in graph, and having 
-its named entity matching related-ner-re, having a relation matching related-reln-re with 
-the first found node having a named entity matching ner-re and part of a relation matching reln-re."
-[ ^SemanticGraph graph ^String ner-re ^String reln-re ^String related-ner-re ^String related-reln-re]
-  (let [ main-node (first (nodes-in-reln graph ner-re reln-re))
+its named entity matching related-ner-re, having a relation matching related-reln-re with node if provided,
+or the first found node having a named entity matching ner-re and part of a relation matching reln-re."
+([ ^SemanticGraph graph ^IndexedWord node ^String ner-re ^String reln-re ^String related-ner-re ^String related-reln-re]
+  (let [ main-node (or node (first (nodes-in-reln graph ner-re reln-re)))
          related-edges (get-edges graph main-node related-reln-re)
          values (mapcat #(nne-tags-from-edge % related-ner-re) related-edges) ]
      (first values)))
+([ ^SemanticGraph graph ^String ner-re ^String reln-re ^String related-ner-re ^String related-reln-re]
+  (related-value-ner graph nil ner-re reln-re related-ner-re related-reln-re)))
+
+
+(defn ^Boolean related?
+"Looks at all edges in graph which are connected to node and having relation matching reln-re, and returns true 
+if one is found with its text value matching txt-re, and false otherwise."
+([ ^SemanticGraph graph ^IndexedWord node ^String reln-re ^String txt-re ^Boolean ignore-case?]
+  (let [ edges (get-edges graph node reln-re) 
+         rel-nodes (map #(opposing-node % node) edges)
+         rel-txt (map #(let [ txt (nodes-text %) ] 
+                         (if ignore-case? (.toLowerCase txt) txt))
+                     rel-nodes)
+         pattern (let [ re (if ignore-case? (.toLowerCase txt-re) txt-re) ]
+                            (Pattern/compile re)) 
+         found (filter #(let [matcher (.matcher pattern %)] (.matches matcher)) rel-txt) ]
+    (< 0 (count found))))
+([ ^SemanticGraph graph ^IndexedWord node ^String reln-re ^String txt-re ]
+  (related? graph node reln-re txt-re true)))
 
 
 (defn ^String date-in-money-from
 "Yields a normalized value for the first found year expression associated with a money expression, itself in a
 'from' relationship."
 [ ^SemanticGraph graph ]
-  (related-value graph "MONEY" "prep_from" "DATE" "prep_in"))
+  (related-value-ner graph "MONEY" "prep_from" "DATE" "prep_in"))
 
 
 
@@ -70,7 +89,7 @@ the first found node having a named entity matching ner-re and part of a relatio
 "Yields a normalized value for the first found year expression associated with a money expression, itself in a
 'to' relationship."
 [ ^SemanticGraph graph ]
-  (related-value graph "MONEY" "prep_to" "DATE" "prep_in"))
+  (related-value-ner graph "MONEY" "prep_to" "DATE" "prep_in"))
 
 (def EXCH "(NYSE|Nyse|nyse|NASDAQ|Nasdaq|nasdaq|TSX|Tsx|tsx)")
 (def STOCK "[A-Z0-9]{1,6}")
@@ -157,9 +176,15 @@ of appearance."
     (matched-nodes (dividend-matcher graph)))
 
 
-;;(defn ^Boolean quarterly-dividend?
-;;"Returns true if the dividend is found in graph (if divnode not provided) and has a quarterly modifier or
-;;similar qualifier attached; false otherwise. If provided divnode must be the node bearing 'dividend' as its lemma
-;;tag within graph."
-;;([ ^SemanticGraph graph ^IndexedWord divnode ]
- ;;   (let [ node (if (nil? divnode) 
+(defn ^Boolean quarterly-dividend?
+"Returns true if the dividend is found in graph (if divnode not provided) and has a quarterly modifier or
+similar qualifier attached; false otherwise. If provided divnode must be the node bearing 'dividend' as its lemma
+tag within graph."
+([ ^SemanticGraph graph ^IndexedWord divnode ]
+   (if-let [ node (if (nil? divnode) (first (dividend-nodes graph)) divnode) ]
+     (let [ rel-args [ ["nn" "quarter"] ["amod" "quarterly"]]
+            results (map #(related? graph node (first %) (second %)) rel-args) ]
+        (< 0 (count (filter true? results))))
+    false))
+([ ^SemanticGraph graph ]
+  (quarterly-dividend? graph nil)))            

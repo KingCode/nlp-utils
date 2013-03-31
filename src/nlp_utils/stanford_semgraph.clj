@@ -117,6 +117,16 @@ ner-re is not provided."
   (nne-tags-from-edge edge ".*"))) 
 
 
+(defn opposing-node
+"Yields the node which is opposite node in edge, i.e. at the other end of the relation
+between the two nodes. It is assumed that node is not nil and either the governor or dependent
+of the relation in edge."
+[ edge node ]
+  (let [ gov (.getGovernor edge)
+         dep (.getDependent edge) ]
+    (if (.equals node gov) dep gov)))
+
+
 (def DIVIDEND_RE "{lemma:dividend}")
 (def DIVIDEND_P (SemgrexPattern/compile DIVIDEND_RE))
 

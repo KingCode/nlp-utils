@@ -62,7 +62,11 @@
        (is (not (nil? div-nodes2)))
        (is (= 1 (count div-nodes1)))
        (is (= 1 (count div-nodes2))))))
-            
+
+(deftest quarterly-dividend?-test-GAP
+  (testing "GAP: Should detect quarterly dividend"
+    (is (not (quarterly-dividend? gap1-deps)))
+    (is (quarterly-dividend? gap2-deps))))            
     
 ;;;;;;;;;;;;;;;;;;;;;;;;; HBHC ;;;;;;;;;;;;;;;;;
 (deftest money-of-test
@@ -83,3 +87,8 @@
        (is (not (nil? div-nodes2)))
        (is (= 1 (count div-nodes1)))
        (is (= 1 (count div-nodes2))))))
+
+(deftest quarterly-dividend?-test-HBHC
+  (testing "HBHC: Should detect quarterly dividend"
+    (is (quarterly-dividend? hbhc1-deps))
+    (is (quarterly-dividend? hbhc2-deps))))            
