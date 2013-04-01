@@ -26,6 +26,17 @@
 (def ^SemanticGraph hbhc1-deps (get-collapsedCCDep hbhc1))
 (def ^SemanticGraph hbhc2-deps (get-collapsedCCDep hbhc2))
 
+
+(def ^String dividend-is "The dividend, according to GAAP, is 40 cents.")
+(def ^SemanticGraph dividend-is-deps (get-collapsedCCDep dividend-is))
+(def ^String dividend-of "The board has approved a dividend of $.25 per share for shareholders of record on March 1st.")
+(def ^SemanticGraph dividend-of-deps (get-collapsedCCDep dividend-of))
+
+(deftest dividend-money-test-1
+  (testing "Should return a monetary amount by navigating from the dividend node"
+    (is (= "$0.4" (dividend-money dividend-is-deps)))
+    (is (= "$0.25" (dividend-money dividend-of-deps)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;; GAP ;;;;;;;;;;;;;;;
 (deftest money-to-test 
   (testing "Should return a monetary amount which is part of an 'to' preposition relationship"
