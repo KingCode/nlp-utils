@@ -31,14 +31,18 @@ matching reln-re. The node's normalized text is returned.
 
 (defn ^String money-of
 "Yields a normalized value for the first found money expression in a prepositional 'of' relationship"
-[ ^SemanticGraph graph ]
+([ ^SemanticGraph graph ]
   (first (attr-in-reln graph "MONEY" "prep_of")))
+([ ^SemanticGraph graph ^IndexedWord node ]
+  (money-of graph)))
 
 
 (defn ^String money-from
 "Yields a normalized value for the first found money expression in a prepositional 'from' relationship"
-[ ^SemanticGraph graph ]
+([ ^SemanticGraph graph ]
   (first (attr-in-reln graph "MONEY" "prep_from")))
+([ ^SemanticGraph graph ^IndexedWord node ]
+  (money-from graph)))
 
 
 (defn ^String money-to

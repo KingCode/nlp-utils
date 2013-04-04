@@ -3,6 +3,12 @@
            (java.util Properties)
            (org.apache.commons.io FileUtils)))
 
+
+(defn ^String keyname 
+"Yields the string value of a keyword."
+[ ^clojure.lang.Keyword key ] (name key))
+
+
 (defn in?
 "Yields true if x is in coll, false otherwise."
 [coll x] (if (some #{x} coll) true false))
