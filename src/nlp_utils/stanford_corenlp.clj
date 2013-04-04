@@ -150,24 +150,23 @@ If provided pipeline must be configured to show required attrs.
 
 
 (defn sentences
-"Yields a seq of sentences resulting from annotating 'content' with pipeline. 
-'content' must be either text or a classpath relative text file.
+"Yields a seq of sentences resulting from annotating the content text  with pipeline. 
 'pipeline' must be an  edu.stanford.pipeline.AnnotationPipeline initualized with annotators 
 for at least 'tokenize, ssplit'. If not provided, a new pipeline is constructed.
 "
-([ content pipeline grammar?]
+([ ^String content ^StanfordCoreNLP pipeline ^Boolean grammar?]
     (let [ 
            sent-ann-cl CoreAnnotations$SentencesAnnotation
            sents (annotated-for content pipeline sent-ann-cl) ]
       (if grammar? (map #(vector (text-of %) (grammar-of %)) sents)
                    (map text-of sents))))
-([ content grammar?]
+([ ^String content ^Boolean grammar?]
     (let [ 
             annotators (if grammar? "tokenize, ssplit, pos, lemma, ner, parse" "tokenize, ssplit")
             props (props-for {CONFIG_ANN annotators})
             pl (new-pipeline props) ] 
         (sentences content pl grammar?)))
-([ content ]
+([ ^String content ]
     (sentences content false)))
     
 

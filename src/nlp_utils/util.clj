@@ -20,6 +20,20 @@
 "Yields true if o is an instance of java.io.File; false otherwise"
 [ o ] (= File (class o)))
 
+;; Regex patterns for unix and windows file paths, but not dirs
+(def WIN_FILEPATH_REP #"(([a-zA-Z]:)|([.a-zA-Z0-9_-]+))?(\\[.a-zA-Z0-9_-]+)+")
+(def NIX_FILEPATH_REP #"([.a-zA-Z0-9_-]+)?(/[.a-zA-Z0-9_-]+)+")
+
+
+(defn filepath?
+"Yields true if the argument string is a file path (detects both windows and *nix)."
+[ ^String s ]
+  (let [ os (.getProperty (System/getProperties) "os.name")
+         win? (.matches (.toLowerCase os) "^(.*\\s+)?windows(\\s+.*)?$") 
+         re-ptn (if win? WIN_FILEPATH_REP NIX_FILEPATH_REP) ]
+    (.matches (.matcher re-ptn s))))
+
+     
 (defn exists-file?
 "Yields true if filepath is for an existing filename; false otherwise"
 [ filepath ]
