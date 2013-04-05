@@ -24,17 +24,17 @@ text.
               :attr "dividend" 
               :qualifier-func quarterly-dividend? 
               :qualifier "quarterly"
-              :verifier #(not nil? (:attr-val %))
+              :verifier #(not (nil? (:attr-val %)))
               :formatter #(let [ qual (if (:qualifier-val %) (str (:qualifier %) " ") " ") ]
                             (str qual (:attr-val %) " " (:attr %) ": " (:attr-val %)))
             },
             { :attr-func money-of 
               :attr "dividend" 
-              :verifier #(not nil? (:attr-val %))
+              :verifier #(not (nil? (:attr-val %)))
             } 
             { :attr-func money-to
               :attr "dividend"
-              :verifier #(not nil? (:attr-val %))
+              :verifier #(not (nil? (:attr-val %)))
             }
 ])
 
@@ -69,6 +69,13 @@ text.
               (or (= :formatter k) (= :verifier k))) rule))
   
 
+(defn except-utils
+[ ^clojure.lang.IPersistentMap m]
+   (filter #(let [ k (key %) ]
+               (and (not (= :formatter k)) (not (= :verifier k)))) m))
+
+
+
 (defn ^clojure.lang.IPersistentMap translate-keys
 "Yields a new map with m's keys ending with -func renamed to <key>-val."
 [ ^ clojure.lang.IPersistentMap m ]
@@ -84,6 +91,28 @@ text.
     (reduce #(conj %1 (apply hash-map %2)) main utils)))
  
 
+
+(defn ^clojure.lang.IPersistentMap prepare-report
+"Assembles partial results into a fully populated report, using seqs of mappings
+ fron rule with the :*-func keyed entries mapped to the output of the correponding rule function.
+"
+[ ^clojure.lang.ISeq attrs ^clojure.lang.ISeq func-returns ^clojure.lang.IPersistentMap rule]
+  (let [ vals (filter #(not (nil? %)) func-returns) 
+         utils (only-utils rule)
+         utils-map (apply hash-map (apply concat utils)) ]
+     (if (and (empty? vals) (= nil (:verifier rule))) nil
+        (let [ vals-map (apply hash-map (apply concat vals)) ]
+               (->> attrs 
+                   (filter #(not (nil? 
+                               ((val-keyword (key %)) vals-map))))
+                  (apply concat)
+                  (apply hash-map)
+                  (conj vals-map) 
+                  (conj vals-map)
+                  (conj utils-map))))))
+
+
+
 (defn ^clojure.lang.IPersistentMap process-rule
 "Yields the result of processing each of the rule's functions on graph and node.
 The output is a map with all key-func/key keyed entries for which key-func returns a non-nil
@@ -96,18 +125,14 @@ If none of the functions returns a non-nil value, nil is returned."
                            fkw (func-keyword k) 
                            f (fkw rule)
                            val (f g n)  ]
-                       (if val [ (append-to-keyword k "-val") val ] nil))  attrs)
-         only-vals (filter #(not (nil? %)) vals) ]
+                       (if val [ (val-keyword k) val ] nil))  attrs) ]
 
-     (if (empty? only-vals) nil
-        (let [ vals-map (apply hash-map (apply concat only-vals))
-               attrs-for-vals (filter 
-                                #(not (nil? 
-                                    ((val-keyword (.key %)) vals-map))) attrs) ]
-;;              (do (println "VALS-MAP: " vals-map)
-;;              (println "ATTRS: " attrs)
-;;                (println "ATTRS-FOR-VALS: " attrs-for-vals))))))
-            (apply conj vals-map (map #(hash-map (first %) (second %)) attrs-for-vals))))))
+     (prepare-report attrs vals rule)))
+
+
+(defn verified?
+[ ^clojure.lang.IPersistentMap report ]
+  (if (and report (:verifier report) ((:verifier report) report)) true false))
 
 
 (defn run-rules
@@ -115,9 +140,10 @@ If none of the functions returns a non-nil value, nil is returned."
 rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
 ([ ^SemanticGraph graph ^IndexedWord node ^clojure.lang.PersistentVector rules ]
   (if-let [ r (first rules) ]
-     (if-let [ report (process-rule r graph node) ]
-        report
-        (recur graph node (next rules)))))
+     (let [ report (process-rule r graph node) ]
+        (if
+          (verified? report) report
+          (recur graph node (next rules))))))
 ([ ^SemanticGraph graph ^clojure.lang.PersistentVector rules ]
   (run-rules graph nil rules)))
 
@@ -130,7 +156,7 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
   
 
           
-(defn analyze-sent 
+(defn ^clojure.lang.IPersistentMap analyze-sent 
 "Yields a report of (currently) dividend amount. If dividend is found to be quarterly, that is indicated."
 [ ^SemanticGraph graph ]
  (let [ node (first (dividend-nodes graph)) ]
@@ -145,14 +171,20 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
 (defn format-report
 "Yields a formatted string of an extracted attribute and its sub-attributes if any."
 ([ ^String txt ^String org ^clojure.lang.IPersistentMap report ] 
-  (let [ info (if (nil? report) "(nothing found)\n"
-               (let [ sorted-keys (sort (keys report))
-                      pairs (partition 2 sorted-keys) 
-                      pair-vals (map #(let [ attr-name ((first %) report)
-                                             figure ((second %) report) ] [attr-name figure]) pairs)
-                      pair-toks (map #(str (first %) ": " (second %)) pair-vals)
-                    ]
-                  (apply str (interpose "\n\t" pair-toks)))) ]
+  (let [ info 
+           (cond (nil? report) "(nothing found)\n"
+                 (:formatter report) ((:formatter report) report)
+                 :else  
+                    (->> (except-utils report) 
+                    (keys) 
+                    (sort)
+                    (partition 2) 
+                    (map #(let [ attr-name ((first %) report)
+                                 figure ((second %) report) ] [attr-name figure]))
+                    (map #(str (first %) ": " (second %)))
+                    (interpose "\n\t")
+                    (apply str))) 
+        ]
       (str org "> " info "\nCONTEXT:\n" txt "\n")))
 ([ ^String txt ^clojure.lang.IPersistentMap report ]
   (format-report txt "" report)))
