@@ -47,9 +47,10 @@ matching reln-re. The node's normalized text is returned.
 
 (defn ^String money-to
 "Yields a normalized value for the first found money expression in a prepositional 'to' relationship"
-[ ^SemanticGraph graph ]
+([ ^SemanticGraph graph ]
   (first (attr-in-reln graph "MONEY" "prep_to")))
-
+([ ^SemanticGraph graph ^IndexedWord node ]
+  (money-to graph)))
 
 (defn ^String related-value-ner
 "Yields a normalized value for the first found node part of a relation reln-re in graph, and having 

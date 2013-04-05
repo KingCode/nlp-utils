@@ -23,7 +23,11 @@ or not.
             },
             { :attr-func money-of 
               :attr "dividend" 
-            } ])
+            } 
+            { :attr-func money-to
+              :attr "dividend"
+            }
+])
 
 
 (defn ^clojure.lang.Keyword func-keyword
@@ -40,10 +44,10 @@ value, with the value replacing the function for key-func entry. See rules decla
 the expected structure of rule.
 If none of the functions returns a non-nil value, nil is returned."
 [ ^clojure.lang.IPersistentMap rule ^SemanticGraph g ^IndexedWord n ]
-  (let [ attrs (filter #(not (.endsWith (keyname %) "-func")) rule) 
+  (let [ attrs (filter #(not (.endsWith (keyname (key %)) "-func")) rule) 
          vals (map #(let [ fkw (func-keyword (.key %))
-                           f (apply fkw rule)
-                           val (apply f g n)  ]
+                           f (fkw rule)
+                           val (f g n)  ]
                        (if val [ fkw val ] nil))  attrs)
          only-vals (filter #(not (nil? %)) vals) ]
 
@@ -51,7 +55,10 @@ If none of the functions returns a non-nil value, nil is returned."
         (let [ vals-map (apply hash-map (apply concat only-vals))
                attrs-for-vals (filter 
                                 #(not (nil? 
-                                    (apply (func-keyword (.key %)) vals-map))) attrs) ]
+                                    ((func-keyword (.key %)) vals-map))) attrs) ]
+;;            (do (println "VALS-MAP: " vals-map)
+;;                (println "ATTRS: " attrs)
+;;                (println "ATTRS-FOR-VALS: " attrs-for-vals))))))
             (apply conj vals-map (map #(hash-map (first %) (second %)) attrs-for-vals))))))
 
 
@@ -79,8 +86,8 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
 
 (defn format-report
 "Yields a formatted string of an extracted attribute and its sub-attributes if any."
-[ ^String txt ^String org ^clojure.lang.PersistentVector report ] 
-  (let [ info (if (nil? report) (str org "> (nothing found)\n")
+([ ^String txt ^String org ^clojure.lang.IPersistentMap report ] 
+  (let [ info (if (nil? report) "(nothing found)\n"
                (let [ sorted-keys (sort (keys report))
                       pairs (partition 2 sorted-keys) 
                       pair-vals (map #(let [ attr-name ((first %) report)
@@ -89,6 +96,8 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
                     ]
                   (apply str (interpose "\n\t" pair-toks)))) ]
       (str org "> " info "\nCONTEXT:\n" txt "\n")))
+([ ^String txt ^clojure.lang.IPersistentMap report ]
+  (format-report txt "" report)))
 
                     
 
@@ -97,4 +106,4 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
 [ doc ]
   (let [ txt (if (filepath? doc) (str-from-file doc) doc)
          sents (sentences txt SPLIT-PL false) ]
-    (map #(format-report (analyze-sentence  %)) sents)))
+    (map #(format-report % (analyze-sentence  %)) sents)))
