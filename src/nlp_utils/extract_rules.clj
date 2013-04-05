@@ -39,7 +39,7 @@ The output is a map with all key-func/key keyed entries for which key-func retur
 value, with the value replacing the function for key-func entry. See rules declaration for 
 the expected structure of rule.
 If none of the functions returns a non-nil value, nil is returned."
-[ ^clojure.lang.IPersistentMap rule ^SemanticGraph g ^IndexedWord n ^clojure.lang.IPersistentMap acc ]
+[ ^clojure.lang.IPersistentMap rule ^SemanticGraph g ^IndexedWord n ]
   (let [ attrs (filter #(not (.endsWith (keyname %) "-func")) rule) 
          vals (map #(let [ fkw (func-keyword (.key %))
                            f (apply fkw rule)
@@ -73,22 +73,24 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
  (let [ sent (first (annotated-for-sentence txt PARSE-PL)) 
         graph (annotated-for-collapsedCCDep sent) 
         node (first (dividend-nodes graph)) ]
-    (if node
-        (let [ result-1 (run-rules graph node rules-with-node) ]
-            (if (seq result-1) result-1 
-                (run-rules graph rules-no-node)))))) 
+    (run-rules graph node rules))) 
+
 
 
 (defn format-report
-"Yields a formatted string of an extracted attribute"
-[ ^String txt ^String attr ^clojure.lang.PersistentVector report ] 
-  (let [ info (if-let [ value (first report) ]
-                (if-let [ modifier (second report) ]
-                    (str "(" modifier ")" attr ": " value)
-                    (str attr ": " value)))
-       ]
-     (str "> " info "\n>(CONTEXT: " txt)))
-           
+"Yields a formatted string of an extracted attribute and its sub-attributes if any."
+[ ^String txt ^String org ^clojure.lang.PersistentVector report ] 
+  (let [ info (if (nil? report) (str org "> (nothing found)\n")
+               (let [ sorted-keys (sort (keys report))
+                      pairs (partition 2 sorted-keys) 
+                      pair-vals (map #(let [ attr-name ((first %) report)
+                                             figure ((second %) report) ] [attr-name figure]) pairs)
+                      pair-toks (map #(str (first %) ": " (second %)) pair-vals)
+                    ]
+                  (apply str (interpose "\n\t" pair-toks)))) ]
+      (str org "> " info "\nCONTEXT:\n" txt "\n")))
+
+                    
 
 (defn analyze-document
 "Yields extracted data from the argument, which can be either a text string or the path of a file thereof."
