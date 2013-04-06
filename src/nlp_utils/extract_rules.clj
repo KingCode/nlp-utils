@@ -176,27 +176,44 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
                  (:formatter report) ((:formatter report) report)
                  :else  
                     (->> (except-utils report) 
-                    (keys) 
-                    (sort)
-                    (partition 2) 
-                    (map #(let [ attr-name ((first %) report)
-                                 figure ((second %) report) ] [attr-name figure]))
-                    (map #(str (first %) ": " (second %)))
-                    (interpose "\n\t")
-                    (apply str))) 
+                      (keys) 
+                      (sort)
+                      (partition 2) 
+                      (map #(let [ attr-name ((first %) report)
+                                   figure ((second %) report) ] [attr-name figure]))
+                      (map #(str (first %) ": " (second %)))
+                      (interpose "\n\t")
+                      (apply str))) 
         ]
       (str org "> " info "\nCONTEXT:\n" txt "\n")))
 ([ ^String txt ^clojure.lang.IPersistentMap report ]
   (format-report txt "" report)))
 
 
+(defn format-reports
+"Yields extraction reports formatted into a reader friendly string.
+Each element in reports is a vector of 2 elements in order: the report map and
+the corresponding text.
+"
+[ ^clojure.lang.ISeq reports org]
+  (map #(format-report (second %) org (first %)) reports))
 
-(defn analyze-document
-"Yields extracted data from the argument, which can be either a text string or the path of a file thereof."
+
+(defn extract-reports 
+"Yields extracted data from doc, which can be either a text string or the path of a file thereof.
+The extracted data is a 2 element vector , the first element of which is the organzation name,and 
+the second a seq of 2 element vectors, each in order a  map keyed according to the :<attr> and 
+:<attr>-val pattern, none of which maps to nil intentionally, and the orginal sentence text."
 [ doc ]
   (let [ txt (if (filepath? doc) (str-from-file doc) doc)
          sents (sentences txt SPLIT-PL false) 
          sent-one (first sents)
          corp (org (get-graph sent-one) sent-one) ]
-    (map #(format-report % corp (analyze-sent-txt %)) sents)))
+;;    (map #(format-report % corp (analyze-sent-txt %)) sents)))
+      [ corp (map #(let [ report (analyze-sent-txt %) ] [report %]) sents)]))
 
+
+(defn analyze-document
+[ doc ]
+    (->> (extract-reports doc)
+        (format-reports)))

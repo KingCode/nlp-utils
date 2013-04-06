@@ -9,6 +9,8 @@ Naming Conventions:
 
 ")
 
+
+
 (def DATA_FIL "test/data/financial-lnkd.txt")
 (def DATA_FIL2 "test/data/financial-goog-2012-q4.txt")
 (def DATA_FIL3 "test/data/financial-gs-2012-q4.txt")
@@ -20,6 +22,14 @@ Naming Conventions:
 (def DATA_FIL9 "test/data/fstr.txt")
 (def DATA_FIL10 "test/data/geo.txt")
 (def DATA_FIL11 "test/data/apog.txt")
+
+
+(def GAP-FILE DATA_FIL7) 
+(def HBHC-FILE DATA_FIL8)
+(def FSTR-FILE DATA_FIL9)
+(def GEO-FILE DATA_FIL10)
+(def APOG-FILE DATA_FIL11)
+
 
 (def PART "an increase of 81%")
 (def PART-1 "compared to $167.7 million in the fourth quarter of 2011.")
