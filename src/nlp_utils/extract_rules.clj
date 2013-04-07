@@ -25,8 +25,8 @@ text.
               :qualifier-func quarterly-dividend? 
               :qualifier "quarterly"
               :verifier #(not (nil? (:attr-val %)))
-              :formatter #(let [ qual (if (:qualifier-val %) (str (:qualifier %) " ") " ") ]
-                            (str qual (:attr-val %) " " (:attr %) ": " (:attr-val %)))
+              :formatter #(let [qstr (if (:qualifier-val %) (str (:qualifier %)  " ") "")]
+                            (str qstr (:attr  %) " " ": " (:attr-val %)))
             },
             { :attr-func money-of 
               :attr "dividend" 
@@ -169,9 +169,13 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
 
 
 (defn format-report
-"Yields a formatted string of an extracted attribute and its sub-attributes if any."
-([ ^String txt ^String org ^clojure.lang.IPersistentMap report ] 
-  (let [ info 
+"Yields a formatted string of an extracted attribute and its sub-attributes if any.
+org defaults to the empty string and report-shell is part of the output of extract-reports.
+"
+([ ^String org ^clojure.lang.IPersistentMap report-shell] 
+  (let [ report (:result report-shell)
+         txt (:text report-shell)
+         info 
            (cond (nil? report) "(nothing found)\n"
                  (:formatter report) ((:formatter report) report)
                  :else  
@@ -186,31 +190,38 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
                       (apply str))) 
         ]
       (str org "> " info "\nCONTEXT:\n" txt "\n")))
-([ ^String txt ^clojure.lang.IPersistentMap report ]
-  (format-report txt "" report)))
+([ ^clojure.lang.IPersistentMap report-shell ]
+  (format-report "" report-shell)))
 
 
 (defn format-reports
 "Yields extraction reports formatted into a reader friendly string.
-Each element in reports is a vector of 2 elements in order: the report map and
-the corresponding text.
+Analysis is expected to be the output of extract-reports.
 "
-[ ^clojure.lang.ISeq reports org]
-  (map #(format-report (second %) org (first %)) reports))
+[ ^clojure.lang.ISeq analysis]
+  (let [ org (first analysis) 
+         reports (second analysis) ]
+    (map #(format-report org %) reports)))
 
 
 (defn extract-reports 
 "Yields extracted data from doc, which can be either a text string or the path of a file thereof.
 The extracted data is a 2 element vector , the first element of which is the organzation name,and 
-the second a seq of 2 element vectors, each in order a  map keyed according to the :<attr> and 
-:<attr>-val pattern, none of which maps to nil intentionally, and the orginal sentence text."
+the second a seq of maps with the following entries: 
+   { :text -> the text being reported on, i.e. a sentence.
+     :result -> the result map
+   }
+The :result entry is a map of the extraction results, and keyed according to the :<attr> and 
+:<attr>-val pattern, none of which maps to nil intentionally.
+"
 [ doc ]
   (let [ txt (if (filepath? doc) (str-from-file doc) doc)
          sents (sentences txt SPLIT-PL false) 
          sent-one (first sents)
          corp (org (get-graph sent-one) sent-one) ]
 ;;    (map #(format-report % corp (analyze-sent-txt %)) sents)))
-      [ corp (map #(let [ report (analyze-sent-txt %) ] [report %]) sents)]))
+      [ corp (map #(let [ report (analyze-sent-txt %) ] 
+                      { :text % :result report} ) sents)]))
 
 
 (defn analyze-document

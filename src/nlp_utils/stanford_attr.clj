@@ -117,12 +117,19 @@ if one is found with its text value matching txt-re, or false otherwise."
 continuous text."
 [ c ]
   (if (= String (class c))
-        (let [ m (.matcher STOCK_P c)
-               _ (.find m) ]
-            (.group m))
+        (let [ m (.matcher STOCK_P c) ]
+           (if-not (.find m) nil
+              (.group m)))
         (first (filter #(if-let [ candidate % ]
                             (let [matcher (. STOCK_P matcher candidate) ]
                                (.matches matcher))) c))))
+
+(defn ^String txt-from-first-appearing
+"Sorts the argument nodes by order of appearance of their corresponding text value
+and returns the text value of the first one." 
+[ nodes ]
+  (let [ sorted (sort compare-by-beginPos nodes) ]
+     (nodes-text (first sorted))))
 
 
 (defn ^String txt-from-org-nodes
@@ -163,16 +170,16 @@ and returns their concatenated value."
 (defn ^String org
 "Yields a normalized value for the first found organization expression. If provided, txt must be the source 
 text for graph: it is used to extract the stock symbol if an organization is found in graph.
-If no stock symbol if found (either with or without source text) all organization tokens are returned by order
-of appearance."
+If no stock symbol if found (either with or without source text) the first organization token (by order
+of appearance in the source text) is returned."
 ([ ^SemanticGraph graph txt ]
   (let [ nodes (matched-org graph)
          as-txt (map #(nodes-text %) nodes) 
          stock (find-stock as-txt) ]
     (cond stock (format-stock stock)
           txt (if-let [ stock-from-text (find-stock txt) ] (format-stock stock-from-text)
-                        (txt-from-org-nodes nodes))
-          :else (txt-from-org-nodes nodes))))
+                        (txt-from-first-appearing nodes))
+          :else (txt-from-first-appearing nodes))))
 
 ([ ^SemanticGraph graph ]
   (org graph nil)))
