@@ -5,18 +5,53 @@
                      (stanford-corenlp-pool :only [SPLIT-PL PARSE-PL])
                      util))
     (:import (edu.stanford.nlp.trees.semgraph SemanticGraph)
-             (edu.stanford.nlp.ling IndexedWord)))
+             (edu.stanford.nlp.ling IndexedWord)
+             (clojure.lang Ratio)))
 
+
+(def UTIL-KEYS [:verifier :formatter :rating])
+
+
+(defn ^clojure.lang.IFn make-rating
+"Yields a rating function which takes a result map and returns a ratio; config must be 
+a map with the following keys: 
+   :core -> the name of the key in the result map which points to the core attribute value,
+            e.g. the money amount of a dividend. It is assigned one more than half the returned rating 
+            value if present.
+   :aux -> a seq of other keys pointing at auxiliary attribute values, each one assigned one rating unit.
+
+The ratio returned by the rating function can be used to calculate the quality of the result.
+If two results have the same rating, the ratings' denominators can be compared to determine 
+the result with the most information.
+
+For example, assuming two results A and B are being compared, A with 5 auxiliary attrs and B with 2 auxiliaries, 
+then they have maximum ratings off 11/11 and 5/5 respectively, and A can be considered to be higher quality.
+Similarly, if A has all auxiliaries but is missing its core attribute value and B has its core but is missing all 
+its auxiliaries, then 5/11 < 3/5 and B is a better result. 
+"
+[ ^clojure.lang.IPersistentMap config ]
+  (let [ core (:core config) aux (:aux config) ]
+    (fn [ ^clojure.lang.IPersistentMap result]
+        (let [ num-aux (count aux) 
+               denominator (-> num-aux (* 2) (+ 1))
+               core-rval (if (core result) (inc (num-aux)) 0)
+               aux-rval (reduce + (map #(if (% result) 1 0) aux)) 
+               numerator (+ core-rval aux-rval) ]
+            (make-ratio numerator denominator)))))
+        
 
 (def rules
 "Rules which are used to extract information, each a map with one or more of the following key
 pairs patterns: 
     :xyz-func maps to a (fn [^SemanticGraph g ^IndexWord w] ...) yielding the value of xyz
     :xyz      maps to a string identifying the value from invoking xyz-func
-All functions are required to support the 2-arity signature above, whether both args are used
-or not.
+All data extraction functions (i.e. keyed with :*-func) are required to support the 2-arity signature above, 
+whether both args are used or not.
+
 If provided map entries for :verifier and :formatter point to functions taking as input a map which must
-contain the same key pattern as described above. The verifier is a predicate which returns true if the
+be structured according to a similar pattern as described above, except that :<attr>-func entries are instead
+:<attr>-val and map to the value returned by the function: essentially the 'value' map is a mirror of this one
+and results from processing the rule. The verifier is a predicate which returns true if the
 argument map is a meaningful, or useful result. The formatter converts the result into user friendly
 text. 
 "
@@ -31,12 +66,12 @@ text.
             { :attr-func money-of 
               :attr "dividend" 
               :verifier #(not (nil? (:attr-val %)))
-            } 
+            },
             { :attr-func money-to
               :attr "dividend"
               :verifier #(not (nil? (:attr-val %)))
             }
-])
+              ])
 
 
 (defn ^clojure.lang.Keyword append-to-keyword
@@ -63,16 +98,17 @@ text.
 
 
 (defn only-utils
-"Retains only :verfier, :formatter keyed entries from rule map."
+"Yields a seq of only utility function entries from rule map. See UTIL-KEYS."
 [ ^clojure.lang.IPersistentMap rule ]
     (filter #(let [ k (key %) ] 
-              (or (= :formatter k) (= :verifier k))) rule))
+                (in? UTIL-KEYS k)) rule))
   
 
 (defn except-utils
+"Yields a seq with only utility function entries from rule map. See UTIL-KEYS."
 [ ^clojure.lang.IPersistentMap m]
    (filter #(let [ k (key %) ]
-               (and (not (= :formatter k)) (not (= :verifier k)))) m))
+                 (not (in? UTIL-KEYS k))) m))
 
 
 

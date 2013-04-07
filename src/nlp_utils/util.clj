@@ -1,7 +1,13 @@
 (ns nlp-utils.util
   (:import (java.io File)
            (java.util Properties)
+           (clojure.lang Ratio)
            (org.apache.commons.io FileUtils)))
+
+(defn ^Ratio make-ratio
+"Yields a Ratio, circumventing clojure's coercion to Long."
+[ numerator, denominator ]
+  (Ratio. (biginteger numerator) (biginteger denominator)))
 
 
 (defn ^String keyname 
