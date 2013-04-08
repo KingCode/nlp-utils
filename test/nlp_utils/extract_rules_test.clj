@@ -86,7 +86,7 @@
            r (:result (first info)) ]
       (is (= "Nasdaq:FSTR" org))
       (is (= "$0.03" (:attr-val r)))
-      (is (= true (:qualifier-val r)))
+      (is (= "quarterly" (:qualifier-val r)))
       (is (= "quarterly" (:qualifier r))))))
 
 

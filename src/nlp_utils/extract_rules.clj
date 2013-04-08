@@ -143,9 +143,20 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :qualifier-func (fn [g _] (get-word g "{lemma:quarter} < {word:dividend}"))
               :qualifier "quarterly"
               :verifier (make-verifier :attr-val)
-              :formatter (make-formatter { :q :qualifier, :qval :qualifier-func, :a :attr, :aval :attr-val}) 
-              :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
-            }])
+              :formatter (make-formatter { :q :qualifier, :qval :qualifier-val, :a :attr, :aval :attr-val}) 
+              :rating (make-rating {:core :attr-val :aux [:qualifier]})
+            },
+            {
+              :rule-id 5
+              :attr-func (fn [g _] (get-money g "{ner:MONEY} >prep_per {word:dividend}"))
+              :attr "dividend"
+              :qualifier-func (fn [g _] (get-word g "{lemma:quarter} < ({} > {word:dividend})")) 
+              :qualifier "quarterly"
+              :verifier (make-verifier :attr-val)
+              :formatter (make-formatter  { :q :qualifier, :qval :qualifier-func, :a :attr, :aval :attr-val}) 
+              :rating (make-rating {:core :attr-val :aux [:qualifier]})
+            }
+])
 
 
 (defn ^clojure.lang.Keyword append-to-keyword
