@@ -18,7 +18,7 @@ a map with the following keys:
    :core -> the name of the key in the result map which points to the core attribute value,
             e.g. the money amount of a dividend. It is assigned one more than half the returned rating 
             value if present.
-   :aux -> a seq of other keys pointing at auxiliary attribute values, each one assigned one rating unit.
+   :aux (optional) -> a seq of other keys pointing at auxiliary attribute values, each one assigned one rating unit.
 
 The ratio returned by the rating function can be used to calculate the quality of the result.
 If two results have the same rating, the ratings' denominators can be compared to determine 
@@ -30,7 +30,7 @@ Similarly, if A has all auxiliaries but is missing its core attribute value and 
 its auxiliaries, then 5/11 < 3/5 and B is a better result. 
 "
 [ ^clojure.lang.IPersistentMap config ]
-  (let [ core (:core config) aux (:aux config) ]
+  (let [ core (:core config) aux (or (:aux config) ()) ]
     (fn [ ^clojure.lang.IPersistentMap result]
         (let [ num-aux (count aux) 
                denominator (-> num-aux (* 2) (+ 1))
@@ -39,6 +39,34 @@ its auxiliaries, then 5/11 < 3/5 and B is a better result.
                numerator (+ core-rval aux-rval) ]
             (make-ratio numerator denominator)))))
         
+
+(defn ^clojure.lang.Ratio rate
+"Performs the report's rating on its result."
+[ ^clojure.lang.IPersistentMap report ]
+  (let [ r (:result report) rfunc (:rating r) ]
+    (rfunc r))) 
+
+
+(defn compare-reports
+"Determines the better of two reports' results, based on the values yielded by their respective rating functions.
+In case of number equality, the rating with the highest denominator wins. Yields -1, 1 or 0  if rpt1 wins, rpt2 wins,
+or they are deemed equal, respectively.
+"
+( [ ^clojure.lang.IPersistentMap rpt1 ^clojure.lang.IPersistentMap rpt2 ]
+   (let [ rt1 (rate rpt1)            rt2 (rate rpt2)
+          n1 (.numerator rt1)        n2 (.numerator rt2)
+          d1 (.denominator rt1)      d2 (.denominator rt2)
+          q1 (-> n1 (/ d1))          q2 (-> n2 (/ d2))
+        ] 
+    (cond 
+       (-> q1 (< q2)) -1
+       (-> q1 (> q2)) 1
+       :else 
+            (cond 
+               (-> d1 (< d2)) -1
+               (-> d1 (> d2)) 1
+               :else 0))))) 
+
 
 (def rules
 "Rules which are used to extract information, each a map with one or more of the following key
@@ -62,14 +90,17 @@ text.
               :verifier #(not (nil? (:attr-val %)))
               :formatter #(let [qstr (if (:qualifier-val %) (str (:qualifier %)  " ") "")]
                             (str qstr (:attr  %) " " ": " (:attr-val %)))
+              :rating (make-rating {:core :attr-val, :aux [ :qualifier-val]})
             },
             { :attr-func money-of 
               :attr "dividend" 
               :verifier #(not (nil? (:attr-val %)))
+              :rating (make-rating {:core :attr-val})
             },
             { :attr-func money-to
               :attr "dividend"
               :verifier #(not (nil? (:attr-val %)))
+              :rating (make-rating {:core :attr-val})
             }
               ])
 
@@ -88,13 +119,13 @@ text.
 [ ^clojure.lang.Keyword root ]
   (append-to-keyword root "-func"))
 
+(declare except-utils)
 
 (defn only-attrs
 "Filters out '-func', :verifier and :formatter keyed entries from rule map."
 [^clojure.lang.IPersistentMap rule ] 
-  (let [ attrs (filter #(not (.endsWith (keyname (key %)) "-func")) rule) ]
-    (filter #(let [ k (key %) ] 
-                (and (not (= :verifier k)) (not (= :formatter k)))) attrs)))
+  (->> (except-utils rule)
+       (filter #(not (.endsWith (keyname (key %)) "-func")) ))) 
 
 
 (defn only-utils
@@ -111,7 +142,6 @@ text.
                  (not (in? UTIL-KEYS k))) m))
 
 
-
 (defn ^clojure.lang.IPersistentMap translate-keys
 "Yields a new map with m's keys ending with -func renamed to <key>-val."
 [ ^ clojure.lang.IPersistentMap m ]
@@ -126,7 +156,6 @@ text.
        ] 
     (reduce #(conj %1 (apply hash-map %2)) main utils)))
  
-
 
 (defn ^clojure.lang.IPersistentMap prepare-report
 "Assembles partial results into a fully populated report, using seqs of mappings
@@ -184,24 +213,38 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
   (run-rules graph nil rules)))
 
 
+(defn run-rules-bestfit
+"Similar to run-rules, but instead of returning the first found result, this function runs all extraction rules,
+and using each result's rating function, the report withthe best evalution is returned."
+([ ^SemanticGraph graph ^IndexedWord node rules ]
+  (->> (map #(process-rule graph node %) rules)
+                     (filter #(verified? %))
+                     (sort compare-reports)
+                      (first)))
+([ ^SemanticGraph graph rules ]
+    (run-rules graph nil rules))) 
+        
+
 (defn get-graph
 "Yields a dependencies graph from txt, which should be a sentence ending with a period."
 [ ^String txt ]
    (let [ sent (first (annotated-for-sentence txt PARSE-PL)) ]
       (annotated-for-collapsedCCDep sent)))
-  
 
           
 (defn ^clojure.lang.IPersistentMap analyze-sent 
 "Yields a report of (currently) dividend amount. If dividend is found to be quarterly, that is indicated."
-[ ^SemanticGraph graph ]
+([ ^SemanticGraph graph ^clojure.lang.IFn rules-func]
  (let [ node (first (dividend-nodes graph)) ]
-    (run-rules graph node rules))) 
+    (rules-func graph node rules))) 
+([ ^SemanticGraph graph ]
+    (analyze-sent graph run-rules)))
 
-(defn analyze-sent-txt
+(defn analyze-sent-txt 
+([ ^String txt ^clojure.lang.IFn rules-func ]
+    (analyze-sent (get-graph txt) rules-func))
 ([ ^String txt ]
-    (analyze-sent (get-graph txt))))
-
+    (analyze-sent-txt txt run-rules)))
 
 
 (defn format-report
