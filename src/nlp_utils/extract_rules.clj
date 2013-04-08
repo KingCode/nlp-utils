@@ -9,6 +9,7 @@
              (clojure.lang Ratio)))
 
 
+
 (def UTIL-KEYS [:verifier :formatter :rating])
 
 
@@ -32,9 +33,10 @@ its auxiliaries, then 5/11 < 3/5 and B is a better result.
 [ ^clojure.lang.IPersistentMap config ]
   (let [ core (:core config) aux (or (:aux config) ()) ]
     (fn [ ^clojure.lang.IPersistentMap result]
+      ;(do (println "RESULT: " result ", (core result)=" (core result))
         (let [ num-aux (count aux) 
                denominator (-> num-aux (* 2) (+ 1))
-               core-rval (if (core result) (inc (num-aux)) 0)
+               core-rval (if (core result) (inc num-aux) 0)
                aux-rval (reduce + (map #(if (% result) 1 0) aux)) 
                numerator (+ core-rval aux-rval) ]
             (make-ratio numerator denominator)))))
@@ -43,9 +45,7 @@ its auxiliaries, then 5/11 < 3/5 and B is a better result.
 (defn ^clojure.lang.Ratio rate
 "Performs the report's rating on its result."
 [ ^clojure.lang.IPersistentMap report ]
-  (let [ r (:result report) rfunc (:rating r) ]
-    (rfunc r))) 
-
+  ((:rating report) report))
 
 (defn compare-reports
 "Determines the better of two reports' results, based on the values yielded by their respective rating functions.
@@ -59,12 +59,12 @@ or they are deemed equal, respectively.
           q1 (-> n1 (/ d1))          q2 (-> n2 (/ d2))
         ] 
     (cond 
-       (-> q1 (< q2)) -1
-       (-> q1 (> q2)) 1
+       (-> q1 (> q2)) -1
+       (-> q1 (< q2)) 1
        :else 
             (cond 
-               (-> d1 (< d2)) -1
-               (-> d1 (> d2)) 1
+               (-> d1 (> d2)) -1
+               (-> d1 (< d2)) 1
                :else 0))))) 
 
 
@@ -217,7 +217,7 @@ rule, omitting all entry pairs xyz-* for which xyz-func returned nil."
 "Similar to run-rules, but instead of returning the first found result, this function runs all extraction rules,
 and using each result's rating function, the report withthe best evalution is returned."
 ([ ^SemanticGraph graph ^IndexedWord node rules ]
-  (->> (map #(process-rule graph node %) rules)
+  (->> (map #(process-rule % graph node) rules)
                      (filter #(verified? %))
                      (sort compare-reports)
                       (first)))
@@ -231,6 +231,8 @@ and using each result's rating function, the report withthe best evalution is re
    (let [ sent (first (annotated-for-sentence txt PARSE-PL)) ]
       (annotated-for-collapsedCCDep sent)))
 
+;; Defaults
+(def SETTINGS { :rules-func run-rules-bestfit })
           
 (defn ^clojure.lang.IPersistentMap analyze-sent 
 "Yields a report of (currently) dividend amount. If dividend is found to be quarterly, that is indicated."
@@ -238,13 +240,13 @@ and using each result's rating function, the report withthe best evalution is re
  (let [ node (first (dividend-nodes graph)) ]
     (rules-func graph node rules))) 
 ([ ^SemanticGraph graph ]
-    (analyze-sent graph run-rules)))
+    (analyze-sent graph (:rules-func SETTINGS))))
 
 (defn analyze-sent-txt 
 ([ ^String txt ^clojure.lang.IFn rules-func ]
     (analyze-sent (get-graph txt) rules-func))
 ([ ^String txt ]
-    (analyze-sent-txt txt run-rules)))
+    (analyze-sent-txt txt (:rules-func SETTINGS))))
 
 
 (defn format-report
@@ -283,6 +285,7 @@ Analysis is expected to be the output of extract-reports.
     (map #(format-report org %) reports)))
 
 
+
 (defn extract-reports 
 "Yields extracted data from doc, which can be either a text string or the path of a file thereof.
 The extracted data is a 2 element vector , the first element of which is the organzation name,and 
@@ -293,14 +296,16 @@ the second a seq of maps with the following entries:
 The :result entry is a map of the extraction results, and keyed according to the :<attr> and 
 :<attr>-val pattern, none of which maps to nil intentionally.
 "
-[ doc ]
+([ doc rules-func]
   (let [ txt (if (filepath? doc) (str-from-file doc) doc)
          sents (sentences txt SPLIT-PL false) 
          sent-one (first sents)
          corp (org (get-graph sent-one) sent-one) ]
-;;    (map #(format-report % corp (analyze-sent-txt %)) sents)))
-      [ corp (map #(let [ report (analyze-sent-txt %) ] 
+      [ corp, (map #(let [ report (analyze-sent-txt % rules-func) ] 
                       { :text % :result report} ) sents)]))
+
+([ doc ]
+  (extract-reports doc (:rules-func SETTINGS))))
 
 
 (defn analyze-document
