@@ -192,7 +192,9 @@ of appearance in the source text) is returned."
 
 
 (defn dividend-money
-"Yields the money value of a dividend from the dividend node's 'of' relation to the amount."
+"Yields the money value of a dividend from the dividend node's 'of' relation to the amount.
+Example: A dividend of 40 cents will be distributed...
+"
 ([ ^SemanticGraph graph ^IndexedWord div-node ]
   (if-let [ node (if (nil? div-node) (first (dividend-nodes graph)) div-node) ] 
     (let [ reln-args [ "prep_of" "nsubj" "prep_to"]

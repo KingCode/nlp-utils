@@ -10,7 +10,7 @@
 
 
 
-(def UTIL-KEYS [:verifier :formatter :rating])
+(def UTIL-KEYS [:rule-id :verifier :formatter :rating])
 
 
 (defn ^clojure.lang.IFn make-rating
@@ -67,6 +67,27 @@ or they are deemed equal, respectively.
                (-> d1 (< d2)) 1
                :else 0))))) 
 
+(defn make-verifier
+"Yields a verifier function taking as input a result map and returning
+true if (attr-key rmap) is not nil.
+"
+[ attr-key ]
+  #(not (nil? (attr-key %))))
+
+
+(defn make-formatter
+"Yields a formatter taking as input a result map. 
+config must be a map with  :a, :aval, [:q and :qval]  pointing to
+qualifier, qualifier value, main attribute, and main attribute value resp.
+"
+[ ^clojure.lang.IPersistentMap config ]
+  (let [ q (:q config) qval (:qval config) a (:a config) aval (:aval config) ]
+     #(let [qstr (if (and q qval) 
+                     (if (qval %) (str (q %)  " ") 
+                                                "") 
+                     "") 
+            ]
+      (str qstr (a %) ": " (aval %)))))
 
 (def rules
 "Rules which are used to extract information, each a map with one or more of the following key
@@ -76,33 +97,55 @@ pairs patterns:
 All data extraction functions (i.e. keyed with :*-func) are required to support the 2-arity signature above, 
 whether both args are used or not.
 
-If provided map entries for :verifier and :formatter point to functions taking as input a map which must
+META ENTRIES
+
+Map entries for :verifier, :rating and :formatter point to functions taking as input a map which must
 be structured according to a similar pattern as described above, except that :<attr>-func entries are instead
 :<attr>-val and map to the value returned by the function: essentially the 'value' map is a mirror of this one
 and results from processing the rule. The verifier is a predicate which returns true if the
 argument map is a meaningful, or useful result. The formatter converts the result into user friendly
-text. 
+text.
+
+Map entry :rule-id is a meta entry for tracking rule usage.
+
+            **** To keep in mind when adding new rules ****
+Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :formatter optional.
 "
-          [ { :attr-func dividend-money 
+          [ { 
+              :rule-id 1
+              :attr-func dividend-money 
               :attr "dividend" 
               :qualifier-func quarterly-dividend? 
               :qualifier "quarterly"
               :verifier #(not (nil? (:attr-val %)))
               :formatter #(let [qstr (if (:qualifier-val %) (str (:qualifier %)  " ") "")]
-                            (str qstr (:attr  %) " " ": " (:attr-val %)))
+                            (str qstr (:attr  %) ": " (:attr-val %)))
               :rating (make-rating {:core :attr-val, :aux [ :qualifier-val]})
             },
-            { :attr-func money-of 
+            { 
+              :rule-id 2
+              :attr-func money-of 
               :attr "dividend" 
               :verifier #(not (nil? (:attr-val %)))
               :rating (make-rating {:core :attr-val})
             },
-            { :attr-func money-to
+            { 
+              :rule-id 3
+              :attr-func money-to
               :attr "dividend"
               :verifier #(not (nil? (:attr-val %)))
               :rating (make-rating {:core :attr-val})
-            }
-              ])
+            }(comment ,
+            {
+              :rule-id 4
+              :attr-func (fn [g _] (get-money g "{ner:MONEY} <prep_of ({tag:VBD} >dobj {word:dividend})"))
+              :attr "dividend"
+              :aualifier-func (fn [g _] (get-word g "{lemma:quarter} < {word:dividend}"))
+              :qualifier "quarterly"
+              :verifier (make-verifier :attr-val)
+              :formatter (make-formatter { :q :qualifier, :qval :qualifier-func, :a :attr, :aval :attr-val}) 
+              :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
+            })])
 
 
 (defn ^clojure.lang.Keyword append-to-keyword

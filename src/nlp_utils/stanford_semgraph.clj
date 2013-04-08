@@ -75,24 +75,68 @@ against all edges in graph.
   (= "ORGANIZATION" (.ner node)))
 
 
-(defn nne-tag
+(defn- ^SemgrexPattern compile-semgrex
+"Yields a compiled pattern from semgrex-re."
+[ ^String semgrex-re ]
+  (SemgrexPattern/compile semgrex-re))
+
+
+(def semgrex-pattern
+"Yields a cached compiled pattern from semgrex-re.
+ Memoizes nlp-utils.stanford-semgraph/compile-semgrex.
+"
+   (memoize compile-semgrex))
+
+
+(defn ^String nne-tag
 "Yields the normalized named entity tag annotation, i.e. the 'complete' value of a money, percent, date etc.,
 of which the token for node is part, if ner-re matches the NER tag for the node.
 If ner-re is not provided the NNE tag annotation for the node is returned without condition.
 "
-([ node ner-re]
+([ ^IndexedWord node ^String ner-re]
   (if (.matches (.ner node) ner-re)
     (.get node CoreAnnotations$NormalizedNamedEntityTagAnnotation)))
-([ node ]
+([ ^IndexedWord node ]
   (nne-tag node ".*")))
 
 
+(defn ^IndexedWord get-node
+"Yields the first node in graph matching semgrex-re.
+"
+[ ^SemanticGraph graph ^String semgrex-re ]
+  (let [ m (-> (semgrex-pattern semgrex-re) (.matcher graph)) ]
+    (if (.find m) (.getMatch m)))) 
 
-(defn get-money
-"Yields the normalized monetary value for node, using its NER attr." 
-[ node ]
+
+
+(defn ^String get-money
+"Yields the normalized monetary value for node, using its NER attr.
+If instead graph and semgrex-re are provided, the same is obtained from the first node
+resulting from a search on the graph using semgrex-re.
+" 
+([ ^IndexedWord node ]
     (if (money? node)
       (nne-tag node)))
+([ ^SemanticGraph graph ^String semgrex-re ]
+    (if-let [ node (get-node graph semgrex-re) ]
+        (get-money node))))
+
+
+(defmulti ^String get-word
+"Yields the word for node if it matches re, or nil.
+If instead graph and semgrex-re are provided, the word is obtained from the first node
+matching a search on the graph using semgrex-re.
+"
+  (fn [ arg re ] (class arg)))
+
+(defmethod get-word IndexedWord 
+[ node ^String re ]
+    (let [ w (.word node) ]
+        (if (.matches w re) w)))
+
+(defmethod get-word SemanticGraph
+[ graph ^String semgrex-re ]
+    (get-word (get-node graph semgrex-re) ".*"))     
 
 
 

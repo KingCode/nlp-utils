@@ -62,6 +62,15 @@
         (is (< 0 (count reports)))
         (foreach [ r reports ] (println r "\n\n")))))
 
+(deftest extract-reports-test-accuracy-GEO
+  (testing "Should output dividend amount and specify quarterly if applicable, for HBHC"
+    (let [ info (info-from GEO-reports)
+           org (org-from GEO-reports)
+           r (:result (first info)) ]
+      (is (= "GEO" org))
+      (is (= "$0.5" (:attr-val r)))
+      (is (= true (:qualifier-val r)))
+      (is (= "quarterly" (:qualifier r))))))
 
 (deftest extract-reports-test-FSTR
    (testing "Should output a report for each sentence in FSTR document"
@@ -70,9 +79,30 @@
         (foreach [ r reports ] (println r "\n\n")))))
 
 
+(deftest extract-reports-test-accuracy-FSTR
+  (testing "Should output dividend amount and specify quarterly if applicable, for HBHC"
+    (let [ info (info-from FSTR-reports)
+           org (org-from FSTR-reports)
+           r (:result (first info)) ]
+      (is (= "Nasdaq:FSTR" org))
+      (is (= "$0.03" (:attr-val r)))
+      (is (= true (:qualifier-val r)))
+      (is (= "quarterly" (:qualifier r))))))
+
+
 (deftest extract-reports-test-APOG
    (testing "Should output a report for each sentence in APOG document"
      (let [ reports (format-reports APOG-reports) ]
         (is (< 0 (count reports)))
         (foreach [ r reports ] (println r "\n\n")))))
 
+
+(deftest extract-reports-test-accuracy-APOG
+  (testing "Should output dividend amount and specify quarterly if applicable, for HBHC"
+    (let [ info (info-from APOG-reports)
+           org (org-from APOG-reports)
+           r (:result (first info)) ]
+      (is (= "Nasdaq:APOG" org))
+      (is (= "$0.09" (:attr-val r)))
+      (is (= true (:qualifier-val r)))
+      (is (= "quarterly" (:qualifier r))))))
