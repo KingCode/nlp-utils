@@ -135,17 +135,17 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :attr "dividend"
               :verifier #(not (nil? (:attr-val %)))
               :rating (make-rating {:core :attr-val})
-            }(comment ,
+            },
             {
               :rule-id 4
               :attr-func (fn [g _] (get-money g "{ner:MONEY} <prep_of ({tag:VBD} >dobj {word:dividend})"))
               :attr "dividend"
-              :aualifier-func (fn [g _] (get-word g "{lemma:quarter} < {word:dividend}"))
+              :qualifier-func (fn [g _] (get-word g "{lemma:quarter} < {word:dividend}"))
               :qualifier "quarterly"
               :verifier (make-verifier :attr-val)
               :formatter (make-formatter { :q :qualifier, :qval :qualifier-func, :a :attr, :aval :attr-val}) 
               :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
-            })])
+            }])
 
 
 (defn ^clojure.lang.Keyword append-to-keyword
@@ -275,7 +275,9 @@ and using each result's rating function, the report withthe best evalution is re
       (annotated-for-collapsedCCDep sent)))
 
 ;; Defaults
-(def SETTINGS { :rules-func run-rules-bestfit })
+(def SETTINGS { :rules-func 
+                        run-rules-bestfit 
+                })
           
 (defn ^clojure.lang.IPersistentMap analyze-sent 
 "Yields a report of (currently) dividend amount. If dividend is found to be quarterly, that is indicated."

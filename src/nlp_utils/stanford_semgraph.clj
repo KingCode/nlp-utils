@@ -5,7 +5,8 @@
                                 CoreAnnotations$TextAnnotation 
                                 IndexedWord)
          (edu.stanford.nlp.trees.semgraph SemanticGraph)
-         (edu.stanford.nlp.semgrex SemgrexPattern SemgrexMatcher)))
+         (edu.stanford.nlp.semgrex SemgrexPattern SemgrexMatcher)
+         (java.util.regex Pattern)))
 
 
 (defn compare-by-beginPos
@@ -122,23 +123,26 @@ resulting from a search on the graph using semgrex-re.
         (get-money node))))
 
 
-(defmulti ^String get-word
+(defmulti ^String get-word  
 "Yields the word for node if it matches re, or nil.
 If instead graph and semgrex-re are provided, the word is obtained from the first node
 matching a search on the graph using semgrex-re.
 "
-  (fn [ arg re ] (class arg)))
+ (fn [ arg re ] (class arg))) 
 
 (defmethod get-word IndexedWord 
-[ node ^String re ]
+[ node ^Pattern re]
+  (if-not (nil? node)
     (let [ w (.word node) ]
-        (if (.matches w re) w)))
+        (if (.matches w re) w))))
 
-(defmethod get-word SemanticGraph
+(defmethod get-word SemanticGraph 
 [ graph ^String semgrex-re ]
     (get-word (get-node graph semgrex-re) ".*"))     
 
-
+(defmethod get-word :default 
+[ any any]
+    nil)
 
 (defn nodes-from-edge
 "Yields one or both nodes in edge having named entities matching ner-re, or both nodes if 
