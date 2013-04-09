@@ -10,6 +10,12 @@
   (Ratio. (biginteger numerator) (biginteger denominator)))
 
 
+(defn compare-greater-first
+[ a b ]
+    (let [ res (compare a b) ]
+        (- 0 res)))
+
+
 (defn ^String keyname 
 "Yields the string value of a keyword."
 [ ^clojure.lang.Keyword key ] (name key))

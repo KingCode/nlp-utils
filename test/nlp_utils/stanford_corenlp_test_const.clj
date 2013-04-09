@@ -29,6 +29,27 @@ Naming Conventions:
 (def FSTR-FILE DATA_FIL9)
 (def GEO-FILE DATA_FIL10)
 (def APOG-FILE DATA_FIL11)
+(def EE-FILE "test/data/ee.txt")
+(def CSP-FILE "test/data/csp.txt")
+(def HSC-FILE "test/data/hsc.txt")
+(def KSS-FILE "test/data/kss.txt")
+(def LEN-FILE "test/data/len.txt")
+(def LION-FILE "test/data/lion.txt") 
+(def MWV-FILE "test/data/mwv.txt")
+(def PLL-FILE "test/data/pll.txt")
+(def QUALCOMM-FILE "test/data/qualcomm.txt")
+(def ASTEC-FILE "test/data/astec.txt")
+(def SEASPAN-FILE "test/data/seaspan.txt")
+(def SLB-FILE "test/data/slb.txt")
+(def SMG-FILE "test/data/smg.txt")
+(def SO-FILE "test/data/so.txt")
+(def TXN-FILE "test/data/txn.txt")
+(def VALU-FILE "test/data/valu.txt")
+(def VNO-FILE "test/data/vno.txt")
+(def WMB-FILE "test/data/wmb.txt")
+
+
+
 
 
 (def PART "an increase of 81%")

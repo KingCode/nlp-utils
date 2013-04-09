@@ -8,10 +8,10 @@
 ;;Whether to: run tests that don't do much other than print output
 ;;            run tests that only perform accuracy checking
 ;;            include empty/nil reports in print-demos
-(def ^:private SETTINGS { :print-demo false
-                          :show-empties true
-                          :accuracy true 
-                          :show-ruleids false
+(def ^:private SETTINGS { :print-demo true 
+                          :show-empties false
+                          :accuracy false
+                          :show-ruleids true 
                 })
 
 (defn show-ruleids? [] (:show-ruleids SETTINGS))
@@ -47,6 +47,25 @@
 (def FSTR-reports (extract-reports FSTR-FILE))
 (def GEO-reports (extract-reports GEO-FILE))
 (def APOG-reports (extract-reports APOG-FILE))
+(def EE-reports (extract-reports EE-FILE))
+(def CSP-reports (extract-reports CSP-FILE))
+(def HSC-reports (extract-reports HSC-FILE))
+(def KSS-reports (extract-reports KSS-FILE))
+(def LEN-reports (extract-reports LEN-FILE))
+(def LION-reports (extract-reports LION-FILE))
+(def MWV-reports (extract-reports MWV-FILE))
+(def PLL-reports (extract-reports PLL-FILE))
+(def QUALCOMM-reports (extract-reports QUALCOMM-FILE))
+(def ASTEC-reports (extract-reports ASTEC-FILE))
+(def SEASPAN-reports (extract-reports SEASPAN-FILE))
+(def SLB-reports (extract-reports SLB-FILE))
+(def SMG-reports (extract-reports SMG-FILE))
+(def SO-reports (extract-reports SO-FILE))
+(def TXN-reports (extract-reports TXN-FILE))
+(def VALU-reports (extract-reports VALU-FILE))
+(def VNO-reports (extract-reports VNO-FILE))
+(def WMB-reports (extract-reports WMB-FILE))
+
 
 (defn org-from [ reports ]
   (first reports))
@@ -146,7 +165,7 @@
 
 
 (deftest extract-reports-test-accuracy-APOG
-  (testing "Should output dividend amount and specify quarterly if applicable, for HBHC"
+  (testing "Should output dividend amount and specify quarterly if applicable, for APOG"
     (if (test-accuracy?)
     (let [ info (info-from APOG-reports)
            org (org-from APOG-reports)
@@ -156,3 +175,92 @@
       (is (= true (:qualifier-val r)))
       (is (= "quarterly" (:qualifier r)))
       (show-ruleids "accuracy-APOG" r)))))
+
+
+(deftest extract-reports-test-EE
+   (testing "Should output a report for each sentence in EE document"
+     (if (print-demo?)
+     (let [ reports (->> EE-reports (filter-analysis) (format-reports)) ] 
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-EE
+  (testing "Should output dividend amount and specify quarterly if applicable, for EE"
+    (if (test-accuracy?)
+    (let [ info (info-from EE-reports)
+           org (org-from EE-reports)
+           r (:result (first info)) ]
+      (is (= "NYSE:EE" org))
+      (is (= "$0.25" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (= "regular quarterly cash" (:qualifier-val r)))
+      (show-ruleids "accuracy-EE" r)))))
+
+
+(deftest extract-reports-test-CSP
+   (testing "Should output a report for each sentence in CSP document"
+     (if (print-demo?)
+     (let [ reports (->> CSP-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-CSP
+  (testing "Should output dividend amount and specify quarterly if applicable, for CSP" 
+    (if (test-accuracy?)
+    (let [ info (info-from CSP-reports)
+           org (org-from CSP-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "Nasdaq:CSPI" org))
+      (is (= "$0.03" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "quarterly" qval) (= true qval))) 
+      (show-ruleids "accuracy-CSP" r)))))
+
+
+(deftest extract-reports-test-HSC
+   (testing "Should output a report for each sentence in HSC document"
+     (if (print-demo?)
+     (let [ reports (->> HSC-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-HSC
+  (testing "Should output dividend amount and specify quarterly if applicable, for HSC" 
+    (if (test-accuracy?)
+    (let [ info (info-from HSC-reports)
+           org (org-from HSC-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NYSE:HSC" org))
+      (is (= "$0.205" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (show-ruleids "accuracy-HSC" r)))))
+
+
+(deftest extract-reports-test-KSS
+   (testing "Should output a report for each sentence in KSS document"
+     (if (print-demo?)
+     (let [ reports (->> KSS-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-KSS
+  (testing "Should output dividend amount and specify quarterly if applicable, for KSS" 
+    (if (test-accuracy?)
+    (let [ info (info-from KSS-reports)
+           org (org-from KSS-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "Kohl's" org))
+      (is (= "$0.35" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (show-ruleids "accuracy-KSS" r)))))
+
+

@@ -111,6 +111,25 @@ If ner-re is not provided the NNE tag annotation for the node is returned withou
          (recur (conj acc (.getMatch m)))))))
           
 
+(defn format-nodes-text
+"Yields a space separated string from concatenating each node's word by order
+of appearance.
+"
+[ nodes ]
+  ( ->> (sort compare-by-beginPos nodes) 
+        (map #(.word %)) 
+        (interpose " ") 
+        (apply str)))
+
+
+(defn get-nodes-as-text
+"Yields formatted text from all nodes matching semgrex-re in graph.
+The returned string is the word of each such node by order of appearance.
+"
+[ ^SemanticGraph graph ^String semgrex-re ]
+  (if-let [ nodes (get-nodes graph semgrex-re) ]
+    (format-nodes-text nodes)))
+
 
 (defn ^IndexedWord get-node
 "Yields the first node in graph matching semgrex-re.

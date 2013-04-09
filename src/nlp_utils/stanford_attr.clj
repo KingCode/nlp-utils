@@ -176,10 +176,11 @@ of appearance in the source text) is returned."
   (let [ nodes (matched-org graph)
          as-txt (map #(nodes-text %) nodes) 
          stock (find-stock as-txt) ]
-    (cond stock (format-stock stock)
+    (cond (not (empty? stock)) (format-stock stock)
           txt (if-let [ stock-from-text (find-stock txt) ] (format-stock stock-from-text)
-                        (txt-from-first-appearing nodes))
-          :else (txt-from-first-appearing nodes))))
+                        (if-not (empty? nodes) (txt-from-first-appearing nodes)))
+          (not (empty? nodes)) (txt-from-first-appearing nodes)
+          :else nil)))
 
 ([ ^SemanticGraph graph ]
   (org graph nil)))

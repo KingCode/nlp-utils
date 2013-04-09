@@ -10,7 +10,7 @@
 
 
 
-(def UTIL-KEYS [:rule-id :verifier :formatter :rating])
+(def UTIL-KEYS [:rule-id :verifier :formatter :rating :weight])
 
 
 (defn ^clojure.lang.IFn make-rating
@@ -47,16 +47,26 @@ its auxiliaries, then 5/11 < 3/5 and B is a better result.
 [ ^clojure.lang.IPersistentMap report ]
   ((:rating report) report))
 
+
+(defn weight
+"Yields the weight of the report, or -999 if none exists.
+"
+[ ^clojure.lang.IPersistentMap report ]
+(or (:weight report) -999))
+
+
 (defn compare-reports
 "Determines the better of two reports' results, based on the values yielded by their respective rating functions.
 In case of number equality, the rating with the highest denominator wins. Yields -1, 1 or 0  if rpt1 wins, rpt2 wins,
 or they are deemed equal, respectively.
+If deemed equal, as a last resort the candidate with the higher weight wins, if different.
 "
 ( [ ^clojure.lang.IPersistentMap rpt1 ^clojure.lang.IPersistentMap rpt2 ]
    (let [ rt1 (rate rpt1)            rt2 (rate rpt2)
           n1 (.numerator rt1)        n2 (.numerator rt2)
           d1 (.denominator rt1)      d2 (.denominator rt2)
           q1 (-> n1 (/ d1))          q2 (-> n2 (/ d2))
+          w1 (weight rpt1)           w2 (weight rpt2)
         ] 
     (cond 
        (-> q1 (> q2)) -1
@@ -65,7 +75,7 @@ or they are deemed equal, respectively.
             (cond 
                (-> d1 (> d2)) -1
                (-> d1 (< d2)) 1
-               :else 0))))) 
+               :else (compare-greater-first w1 w2) ))))) 
 
 (defn make-verifier
 "Yields a verifier function taking as input a result map and returning
@@ -125,6 +135,7 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :formatter #(let [qstr (if (:qualifier-val %) (str (:qualifier %)  " ") "")]
                             (str qstr (:attr  %) ": " (:attr-val %)))
               :rating (make-rating {:core :attr-val, :aux [ :qualifier-val]})
+              :weight 2
             },
             { 
               :rule-id 2
@@ -159,6 +170,7 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :verifier (make-verifier :attr-val)
               :formatter (make-formatter  { :q :qualifier, :qval :qualifier-val, :a :attr, :aval :attr-val}) 
               :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
+              :weight 3
             },
             {
               :rule-id 6
@@ -170,6 +182,7 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :verifier (make-verifier :attr-val)
               :formatter (make-formatter  { :q :qualifier, :qval :qualifier-val, :a :attr, :aval :attr-val}) 
               :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
+              :weight 3
             },
             {
               :rule-id 7
@@ -183,7 +196,34 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :verifier (make-verifier :attr-val)
               :formatter (make-formatter { :q :qualifier-val, :qval :qualifier-val, :a :attr, :aval :attr-val})
               :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
-             }
+              :weight 5
+            },
+            {
+              :rule-id 8
+              :attr-func (fn [g _] (get-money g
+                           "{ner:MONEY} </prep_(of|to)/ ({tag:NN} <prep_on ({tag:/VB(N|B)?/} >dobj {word:dividend}))"))
+              :attr "dividend"
+              :qualifier-func (fn [g _] (get-nodes-as-text g 
+                            "{} </amod|nn/ ({word:dividend} <dobj ({tag:/VB(N|D)?/} >prep_on ({tag:NN} >/prep_(of|to)/ {ner:MONEY})))"))
+              :qualifier "dividend modifiers"
+              :verifier (make-verifier :attr-val)
+              :formatter (make-formatter { :q :qualifier-val, :qval :qualifier-val, :a :attr, :aval :attr-val})
+              :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
+              :weight 5
+            }(comment ,
+            {
+              :rule-id 9
+              :attr-func (fn [g _] (get-money 
+                                    "{ner:MONEY} <prep_of ({tag:NN} <prep_on ({tag:/VB(N|D)?/} >dobj {word:dividend}))"))
+              :attr "dividend"
+              :qualifier-func (fn [g _] (get-nodes-as-text g
+                        "{} </amod|nn/ ({word:dividend} <dobj ({tag:/VB(N|D)?/} >prep_on ({tag:NN} >prep_of {ner:MONEY})))"))
+              :qualifier "dividend modifiers"
+              :verifier (make-verifier :attr-val)
+              :formatter (make-formatter {:q :qualifier-val, :qval :qualifier-val, :a :attr, :aval :attr-val})
+              :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
+              :weight 5
+             })
 ])
 
 
