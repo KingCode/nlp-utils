@@ -1,5 +1,6 @@
 (ns nlp-utils.repl-util
     (:use [clojure.set :only [difference]])
+    (:use nlp-utils.extract-rules)
     (:use nlp-utils.util)
     (:use nlp-utils.stanford-attr)
     (:use nlp-utils.stanford-corenlp)

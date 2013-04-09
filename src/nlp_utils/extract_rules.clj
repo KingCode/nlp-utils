@@ -79,6 +79,10 @@ true if (attr-key rmap) is not nil.
 "Yields a formatter taking as input a result map. 
 config must be a map with  :a, :aval, [:q and :qval]  pointing to
 qualifier, qualifier value, main attribute, and main attribute value resp.
+The return value is in the pattern
+    <qualifier> <attribute>: <attribute value>
+all of which are taken respectively from :q, :a and :aval keyed values in 
+config applied to the result passed to the formatter.
 "
 [ ^clojure.lang.IPersistentMap config ]
   (let [ q (:q config) qval (:qval config) a (:a config) aval (:aval config) ]
@@ -144,7 +148,7 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :qualifier "quarterly"
               :verifier (make-verifier :attr-val)
               :formatter (make-formatter { :q :qualifier, :qval :qualifier-val, :a :attr, :aval :attr-val}) 
-              :rating (make-rating {:core :attr-val :aux [:qualifier]})
+              :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
             },
             {
               :rule-id 5
@@ -153,9 +157,33 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :qualifier-func (fn [g _] (get-word g "{lemma:quarter} < ({} > {word:dividend})")) 
               :qualifier "quarterly"
               :verifier (make-verifier :attr-val)
-              :formatter (make-formatter  { :q :qualifier, :qval :qualifier-func, :a :attr, :aval :attr-val}) 
-              :rating (make-rating {:core :attr-val :aux [:qualifier]})
-            }
+              :formatter (make-formatter  { :q :qualifier, :qval :qualifier-val, :a :attr, :aval :attr-val}) 
+              :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
+            },
+            {
+              :rule-id 6
+              :attr-func (fn [g _] (get-money g "{ner:MONEY} <dobj {tag:/VB./} > {word:dividend}"))
+              :attr "dividend"
+              :qualifier-func (fn [g _] (get-word g 
+                    "{word:/quarter(ly)?/} <amod ({word:dividend} < ({ner:MONEY} <dobj {tag:/VB./}))")) 
+              :qualifier "quarterly"
+              :verifier (make-verifier :attr-val)
+              :formatter (make-formatter  { :q :qualifier, :qval :qualifier-val, :a :attr, :aval :attr-val}) 
+              :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
+            },
+            {
+              :rule-id 7
+              :attr-func (fn [g _] (get-money g 
+                            "{ner:MONEY} <prep_of ({tag:/NN(P)?/} <prep_as ({tag:/VB(D)?/} >dobj {word:dividend}))"))
+              :attr "dividend"
+              :qualifier "quarterly"
+              :qualifier-func (fn [g _] (if-let [ nodes (get-nodes g 
+                  "{} <amod ({word:dividend} <dobj ({tag:/VB(D)?/} >prep_as ({tag:/NN(P)?/} >prep_of {ner:MONEY})))") ]
+                    ( ->> (sort compare-by-beginPos nodes) (map #(.word %)) (interpose " ") (apply str))))
+              :verifier (make-verifier :attr-val)
+              :formatter (make-formatter { :q :qualifier-val, :qval :qualifier-val, :a :attr, :aval :attr-val})
+              :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
+             }
 ])
 
 
@@ -286,7 +314,7 @@ and using each result's rating function, the report withthe best evalution is re
       (annotated-for-collapsedCCDep sent)))
 
 ;; Defaults
-(def SETTINGS { :rules-func 
+(def ^:private SETTINGS { :rules-func 
                         run-rules-bestfit 
                 })
           

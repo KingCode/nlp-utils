@@ -101,6 +101,17 @@ If ner-re is not provided the NNE tag annotation for the node is returned withou
   (nne-tag node ".*")))
 
 
+(defn get-nodes
+"Yields all nodes in graph matching semgrex-re.
+"
+[ ^SemanticGraph graph ^String semgrex-re ]
+  (let [ m (-> (semgrex-pattern semgrex-re) (.matcher graph)) ]
+    (loop [ acc [] ]
+       (if-not (.find m) acc 
+         (recur (conj acc (.getMatch m)))))))
+          
+
+
 (defn ^IndexedWord get-node
 "Yields the first node in graph matching semgrex-re.
 "

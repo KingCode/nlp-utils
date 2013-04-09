@@ -110,5 +110,3 @@ element itself"
 [ coll regex ]
   (let [ idx (which-match coll regex) ]
     (map #(nth coll %) idx))) 
-
-
