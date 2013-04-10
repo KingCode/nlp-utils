@@ -1,6 +1,7 @@
 (ns nlp-utils.util
   (:import (java.io File)
            (java.util Properties)
+           (java.util.regex Pattern)
            (clojure.lang Ratio)
            (org.apache.commons.io FileUtils)))
 
@@ -116,3 +117,70 @@ element itself"
 [ coll regex ]
   (let [ idx (which-match coll regex) ]
     (map #(nth coll %) idx))) 
+
+(def EXCH "(NYSE|Nyse|nyse|NASDAQ|Nasdaq|nasdaq|TSX|Tsx|tsx)")
+(def STOCK "[A-Z0-9]{1,6}")
+(def SEP "\\s?:\\s?")
+(def L-PARN "\\(?")
+(def R-PARN "\\)?")
+(def XTRA "(\\s+(\\s*[^)\\s]{0,10}){0,2})?")
+;;(def XTRA "(\\s*\\[.*\\]\\s*)?")
+(def STOCK_AND_EXCH (str "(" EXCH SEP STOCK "|" STOCK SEP EXCH ")"))
+(def STOCK_RE (str L-PARN STOCK_AND_EXCH XTRA R-PARN))
+(def STOCK_P (Pattern/compile STOCK_RE))
+
+(def SYM_P (Pattern/compile STOCK))
+(def XTRA_P (Pattern/compile XTRA))
+(def EXCH_P (Pattern/compile EXCH))
+(def STOCK_AND_EXCH_P (Pattern/compile STOCK_AND_EXCH))
+
+(defn ^String find-stock
+"Returns the first item matching STOCK_RE regexp; coll can be either a seq of strings, or
+continuous text."
+[ c ] 
+  (if (= String (class c)) 
+        (let [ m (.matcher STOCK_P c) ]
+           (if-not (.find m) nil 
+              (.group m)))
+        (first (filter #(if-let [ candidate % ] 
+                            (let [matcher (. STOCK_P matcher candidate) ]
+                               (.matches matcher))) c))))
+
+
+(defn ^String exch-and-sym
+"Yields the exchange and stock symbol parts of a string matching STOCK_RE."
+[ ^String stock-str ]
+  (let [ m (.matcher STOCK_AND_EXCH_P stock-str) ]
+      (if (.find m) (.group m) nil)))
+
+(comment 
+(defn ^Boolean in-parens?
+"Yields true if str is surrounded by open-close parentheses, false otherwise."
+[ ^String s ]
+  (-> (.startsWith s "(")
+      (and (.endsWith s ")")))) 
+
+
+(defn ^String format-exch-and-sym
+"Yields es with surrounding parentheses if stock has them."
+[ ^String stock ^String es ]
+  (cond (nil? es) nil
+        (->> (not (in-parens? es)) 
+             (and (in-parens? stock))) (str "(" es ")")
+        :else  es))
+)
+
+(defn ^String clean-up
+"Yields txt after removing sequences which may cause sentence splitting to malfunction.
+Currently, this consists only of cleaning-up stock symbols containing dotx.
+"
+[ ^String txt ]
+  (if-let [ stock (find-stock txt) ]
+    (if (-> (.indexOf stock ".")
+            (>= 0))
+      (let [ i (.indexOf stock ".") 
+             e-and-s (or (exch-and-sym stock) (.substring stock 0 i))
+             splits (seq (.split txt stock 2)) ]
+        (str (first splits) e-and-s (second splits)))
+      txt)
+    txt ))

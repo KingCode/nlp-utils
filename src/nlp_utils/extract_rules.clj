@@ -210,10 +210,10 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :formatter (make-formatter { :q :qualifier-val, :qval :qualifier-val, :a :attr, :aval :attr-val})
               :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
               :weight 5
-            }(comment ,
+            },
             {
               :rule-id 9
-              :attr-func (fn [g _] (get-money 
+              :attr-func (fn [g _] (get-money g
                                     "{ner:MONEY} <prep_of ({tag:NN} <prep_on ({tag:/VB(N|D)?/} >dobj {word:dividend}))"))
               :attr "dividend"
               :qualifier-func (fn [g _] (get-nodes-as-text g
@@ -223,7 +223,7 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :formatter (make-formatter {:q :qualifier-val, :qval :qualifier-val, :a :attr, :aval :attr-val})
               :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
               :weight 5
-             })
+             }
 ])
 
 
@@ -421,7 +421,8 @@ The :result entry is a map of the extraction results, and keyed according to the
 :<attr>-val pattern, none of which maps to nil intentionally.
 "
 ([ doc rules-func]
-  (let [ txt (if (filepath? doc) (str-from-file doc) doc)
+  (let [ txt (->> (if (filepath? doc) (str-from-file doc) doc)
+                  (clean-up))
          sents (sentences txt SPLIT-PL false) 
          sent-one (first sents)
          corp (org (get-graph sent-one) sent-one) ]

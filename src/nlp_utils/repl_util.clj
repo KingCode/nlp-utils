@@ -48,6 +48,7 @@
 []
   "(do
      (use 'nlp-utils.util :reload)
+     (use 'nlp-utils.extract-rules :reload)
      (use 'nlp-utils.stanford-attr :reload)
      (use 'nlp-utils.stanford-semgraph :reload)
      (use 'nlp-utils.stanford-corenlp-pool :reload)
@@ -56,6 +57,7 @@
      (use 'nlp-utils.stanford-corenlp-test-const :reload)
      (use 'nlp-utils.stanford-corenlp-test :reload)
      (import 
+             (java.util.regex Pattern)
              (edu.stanford.nlp.ling CoreAnnotations CoreAnnotations$NormalizedNamedEntityTagAnnotation)
              (edu.stanford.nlp.trees.semgraph SemanticGraph)
              (edu.stanford.nlp.semgrex SemgrexPattern SemgrexMatcher)

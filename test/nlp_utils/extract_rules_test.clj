@@ -8,9 +8,9 @@
 ;;Whether to: run tests that don't do much other than print output
 ;;            run tests that only perform accuracy checking
 ;;            include empty/nil reports in print-demos
-(def ^:private SETTINGS { :print-demo true 
+(def ^:private SETTINGS { :print-demo false
                           :show-empties false
-                          :accuracy false
+                          :accuracy true
                           :show-ruleids true 
                 })
 
@@ -262,5 +262,29 @@
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly cash" qval) (= true qval))) 
       (show-ruleids "accuracy-KSS" r)))))
+
+
+
+(deftest extract-reports-test-LEN
+   (testing "Should output a report for each sentence in LEN document"
+     (if (print-demo?)
+     (let [ reports (->> LEN-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-LEN
+  (testing "Should output dividend amount and specify quarterly if applicable, for LEN" 
+    (if (test-accuracy?)
+    (let [ info (info-from LEN-reports)
+           org (org-from LEN-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NYSE:LEN" org))
+      (is (= "$0.04" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (show-ruleids "accuracy-LEN" r)))))
+
 
 

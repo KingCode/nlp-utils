@@ -99,30 +99,6 @@ if one is found with its text value matching txt-re, or false otherwise."
 [ ^SemanticGraph graph ]
   (related-value-ner graph "MONEY" "prep_to" "DATE" "prep_in"))
 
-(def EXCH "(NYSE|Nyse|nyse|NASDAQ|Nasdaq|nasdaq|TSX|Tsx|tsx)")
-(def STOCK "[A-Z0-9]{1,6}")
-(def SEP "\\s?:\\s?")
-(def L-PARN "\\(?")
-(def R-PARN "\\)?")
-(def XTRA "(\\s*\\[.*\\]\\s*)?")
-(def STOCK_RE (str L-PARN "(" EXCH SEP STOCK "|" STOCK SEP EXCH ")"  XTRA R-PARN))
-(def STOCK_P (Pattern/compile STOCK_RE))
-
-(def SYM_P (Pattern/compile STOCK))
-(def XTRA_P (Pattern/compile XTRA))
-(def EXCH_P (Pattern/compile EXCH))
-
-(defn ^String find-stock
-"Returns the first item matching STOCK_RE regexp; coll can be either a seq of strings, or
-continuous text."
-[ c ]
-  (if (= String (class c))
-        (let [ m (.matcher STOCK_P c) ]
-           (if-not (.find m) nil
-              (.group m)))
-        (first (filter #(if-let [ candidate % ]
-                            (let [matcher (. STOCK_P matcher candidate) ]
-                               (.matches matcher))) c))))
 
 (defn ^String txt-from-first-appearing
 "Sorts the argument nodes by order of appearance of their corresponding text value
