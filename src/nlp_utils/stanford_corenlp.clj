@@ -5,6 +5,8 @@
     (java.util List Properties)
     (edu.stanford.nlp.io IOUtils)
     (edu.stanford.nlp.util CoreMap)
+    (edu.stanford.nlp.dcoref CorefCoreAnnotations
+                           CorefCoreAnnotations$CorefChainAnnotation)
     (edu.stanford.nlp.ling CoreAnnotations 
                            CoreAnnotations$TokensAnnotation
                            CoreAnnotations$TextAnnotation 

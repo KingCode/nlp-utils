@@ -264,7 +264,6 @@
       (show-ruleids "accuracy-KSS" r)))))
 
 
-
 (deftest extract-reports-test-LEN
    (testing "Should output a report for each sentence in LEN document"
      (if (print-demo?)
@@ -287,4 +286,304 @@
       (show-ruleids "accuracy-LEN" r)))))
 
 
+(deftest extract-reports-test-LION
+   (testing "Should output a report for each sentence in LION document"
+     (if (print-demo?)
+     (let [ reports (->> LION-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-LION
+  (testing "Should output dividend amount and specify quarterly if applicable, for LION" 
+    (if (test-accuracy?)
+    (let [ info (info-from LION-reports)
+           org (org-from LION-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NASDAQ:LION" org))
+      (is (= "one new share for every 100 shares" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (show-ruleids "accuracy-LION" r)))))
+
+
+(deftest extract-reports-test-MWV
+   (testing "Should output a report for each sentence in MWV document"
+     (if (print-demo?)
+     (let [ reports (->> MWV-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-MWV
+  (testing "Should output dividend amount and specify quarterly if applicable, for MWV" 
+    (if (test-accuracy?)
+    (let [ info (info-from MWV-reports)
+           org (org-from MWV-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NYSE:MWV" org))
+      (is (= "$0.25" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "regular quarterly" qval) (= true qval))) 
+      (show-ruleids "accuracy-MWV" r)))))
+
+
+
+(deftest extract-reports-test-PLL
+   (testing "Should output a report for each sentence in PLL document"
+     (if (print-demo?)
+     (let [ reports (->> PLL-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-PLL
+  (testing "Should output dividend amount and specify quarterly if applicable, for PLL" 
+    (if (test-accuracy?)
+    (let [ info (info-from PLL-reports)
+           org (org-from PLL-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NYSE:PLL" org))
+      (is (= "$0.25" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "regular quarterly" qval) (= true qval))) 
+      (show-ruleids "accuracy-PLL" r)))))
+
+
+(deftest extract-reports-test-QUALCOMM
+   (testing "Should output a report for each sentence in QUALCOMM document"
+     (if (print-demo?)
+     (let [ reports (->> QUALCOMM-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-QUALCOMM
+  (testing "Should output dividend amount and specify quarterly if applicable, for QUALCOMM" 
+    (if (test-accuracy?)
+    (let [ info (info-from QUALCOMM-reports)
+           org (org-from QUALCOMM-reports)
+           r1 (:result (first info)) 
+           qval1 (:qualifier-val r1) 
+           r2 (:result (second info)) 
+           qval2 (:qualifier-val r2) ]
+      (is (= "$0.35" (:attr-val r1)))
+      (is (= "dividend" (:attr r1)))
+      (is (or (= "quarterly" qval1) (= true qval1))) 
+      (is (= "$1.40" (:attr-val r2)))
+      (is (= "annualized" qval2))
+      (show-ruleids "accuracy-QUALCOMM" r1 r2)))))
+
+
+(deftest extract-reports-test-ASTEC
+   (testing "Should output a report for each sentence in ASTEC document"
+     (if (print-demo?)
+     (let [ reports (->> ASTEC-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-ASTEC
+  (testing "Should output dividend amount and specify quarterly if applicable, for ASTEC" 
+    (if (test-accuracy?)
+    (let [ info (info-from ASTEC-reports)
+           org (org-from ASTEC-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "$0.10" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (show-ruleids "accuracy-ASTEC" r)))))
+
+
+(deftest extract-reports-test-SEASPAN
+   (testing "Should output a report for each sentence in SEASPAN document"
+     (if (print-demo?)
+     (let [ reports (->> SEASPAN-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-SEASPAN
+  (testing "Should output dividend amount and specify quarterly if applicable, for SEASPAN" 
+    (if (test-accuracy?)
+    (let [ info (info-from SEASPAN-reports)
+           org (org-from SEASPAN-reports)
+           r1 (:result (first info)) 
+           qval1 (:qualifier-val r1) 
+           r2 (:result (second info))
+           qval2 (:qualifier-val r2)
+;;           r3 (:result (nth info 3))
+;;           qval3 (:qualifier-val r3) 
+          ]
+      (is (= "$0.3125" (:attr-val r1)))
+      (is (= "dividend" (:attr r1)))
+      (is (or (= "quarterly common share" qval1) (= true qval1)))
+
+      (is (= "$0.0625" (:attr-val r2)))
+      (is (= "increase" (:attr r2)))
+      (is (= "quarterly dividend" qval2))
+
+      (show-ruleids "accuracy-SEASPAN" r1 r2)))))
+
+
+(deftest extract-reports-test-SLB
+   (testing "Should output a report for each sentence in SLB document"
+     (if (print-demo?)
+     (let [ reports (->> SLB-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-SLB
+  (testing "Should output dividend amount and specify quarterly if applicable, for SLB" 
+    (if (test-accuracy?)
+    (let [ info (info-from SLB-reports)
+           org (org-from SLB-reports)
+           r1 (:result (first info)) 
+           qval1 (:qualifier-val r1) 
+           r2 (:result (second info))
+           qval2 (:qualifier-val r2)
+        ]
+      (is (= "NYSE:SLB" org))
+      (is (= "13.6%" (:attr-val r1)))
+      (is (= "increase" (:attr r1)))
+      (is (= "quarterly dividend" qval1))
+
+      (show-ruleids "accuracy-SLB" r1 r2)))))
+
+
+(deftest extract-reports-test-SMG
+   (testing "Should output a report for each sentence in SMG document"
+     (if (print-demo?)
+     (let [ reports (->> SMG-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-SMG
+  (testing "Should output dividend amount and specify quarterly if applicable, for SMG" 
+    (if (test-accuracy?)
+    (let [ info (info-from SMG-reports)
+           org (org-from SMG-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NYSE:SMG" org))
+      (is (= "$0.325" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "cash" qval) (= false qval))) 
+      (show-ruleids "accuracy-SMG" r)))))
+
+
+(deftest extract-reports-test-SO
+   (testing "Should output a report for each sentence in SO document"
+     (if (print-demo?)
+     (let [ reports (->> SO-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-SO
+  (testing "Should output dividend amount and specify quarterly if applicable, for SO" 
+    (if (test-accuracy?)
+    (let [ info (info-from SO-reports)
+           org (org-from SO-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "Southern Company" org))
+      (is (= "$0.49" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "regular quarterly"  qval) (= true qval))) 
+      (show-ruleids "accuracy-SO" r)))))
+
+
+(deftest extract-reports-test-TXN
+   (testing "Should output a report for each sentence in TXN document"
+     (if (print-demo?)
+     (let [ reports (->> TXN-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-TXN
+  (testing "Should output dividend amount and specify quarterly if applicable, for TXN" 
+    (if (test-accuracy?)
+    (let [ info (info-from TXN-reports)
+           org (org-from TXN-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NASDAQ:TXN" org))
+      (is (= "$0.21" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "quarterly cash"  qval) (= true qval))) 
+      (show-ruleids "accuracy-TXN" r)))))
+
+
+(deftest extract-reports-test-VALU
+   (testing "Should output a report for each sentence in VALU document"
+     (if (print-demo?)
+     (let [ reports (->> VALU-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-VALU
+  (testing "Should output dividend amount and specify quarterly if applicable, for VALU" 
+    (if (test-accuracy?)
+    (let [ info (info-from VALU-reports)
+           org (org-from VALU-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NASDAQ:VALU" org))
+      (is (= "$0.15" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "quarterly cash"  qval) (= true qval))) 
+      (show-ruleids "accuracy-VALU" r)))))
+
+
+(deftest extract-reports-test-VNO
+   (testing "Should output a report for each sentence in VNO document"
+     (if (print-demo?)
+     (let [ reports (->> VNO-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-VNO
+  (testing "Should output dividend amount and specify quarterly if applicable, for VNO" 
+    (if (test-accuracy?)
+    (let [ info (info-from VNO-reports)
+           org (org-from VNO-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NYSE:VNO" org))
+      (is (= "$0.73" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "regular quarterly"  qval) (= true qval))) 
+      (show-ruleids "accuracy-VNO" r)))))
+
+
+(deftest extract-reports-test-WMB
+   (testing "Should output a report for each sentence in WMB document"
+     (if (print-demo?)
+     (let [ reports (->> WMB-reports (filter-analysis) (format-reports)) ]
+        (is (< 0 (count reports)))
+        (print-reports reports)))))
+
+
+(deftest extract-reports-test-accuracy-WMB
+  (testing "Should output dividend amount and specify quarterly if applicable, for WMB" 
+    (if (test-accuracy?)
+    (let [ info (info-from WMB-reports)
+           org (org-from WMB-reports)
+           r (:result (first info)) 
+           qval (:qualifier-val r) ]
+      (is (= "NYSE:WMB" org))
+      (is (= "$0.33875" (:attr-val r)))
+      (is (= "dividend" (:attr r)))
+      (is (or (= "regular"  qval) (= false qval))) 
+      (show-ruleids "accuracy-WMB" r)))))
 
