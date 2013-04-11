@@ -184,3 +184,14 @@ Currently, this consists only of cleaning-up stock symbols containing dotx.
         (str (first splits) e-and-s (second splits)))
       txt)
     txt ))
+
+;; custom regex NOT implemented
+(defn ^String multiline
+"Removes newline characters from s and yields the result. If re is provided it must be
+a regex pattern (java.util.regex.Pattern), and is used 
+to remove only the newlines matching re. Otherwise all newlines are removed.
+"
+([ ^String s ^Pattern p ]
+      s)
+([ ^String s ]
+  (.replaceAll s "\n" "")))

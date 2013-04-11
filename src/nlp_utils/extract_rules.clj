@@ -77,12 +77,16 @@ If deemed equal, as a last resort the candidate with the higher weight wins, if 
                (-> d1 (< d2)) 1
                :else (compare-greater-first w1 w2) ))))) 
 
+
 (defn make-verifier
 "Yields a verifier function taking as input a result map and returning
 true if (attr-key rmap) is not nil.
 "
-[ attr-key ]
-  #(not (nil? (attr-key %))))
+[ attr-key & attrs ]
+  (fn [ result ]
+    (let [vals (->> (cons attr-key attrs) 
+                   (map #(% result))) ]
+           (not (some nil? vals)))))
 
 
 (defn make-formatter
@@ -223,6 +227,36 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :formatter (make-formatter {:q :qualifier-val, :qval :qualifier-val, :a :attr, :aval :attr-val})
               :rating (make-rating {:core :attr-val :aux [:qualifier-val]})
               :weight 5
+             },
+             {
+              :rule-id 10
+              :attr-func (fn [g _] (get-money g
+                    "{ner:MONEY} <prep_to ({tag:/VB[ND]?/} >nsubj {lemma:dividend} >prep_from {ner:MONEY})"))
+              :attr "dividend"
+              :attr-from-func (fn [g _] (get-money g
+                    "{ner:MONEY} <prep_from ({tag:/VB[ND]?/} >nsubj {lemma:dividend} >prep_to {ner:MONEY})"))
+              :attr-from "increased from"
+              :qual-func (fn [g _] (get-word g (multiline
+                     "{word:/quarter(ly)?/} <amod ({lemma:dividend} <prep_for ({} <conj_and ({tag:/VB[ND]?/}
+                       >nsubj {lemma:dividend} >prep_from {ner:MONEY} >prep_to {ner:MONEY})))")))
+              :qual "quarterly"
+              :verifier (make-verifier :attr-val :qual-val)
+              :rating (make-rating { :core :attr-val :aux [ :qual-val :attr-from ]})
+              :weight 10
+             },
+             { 
+              :rule-id 11
+              :attr-func (fn [g _] (get-money g 
+                    "{ner:MONEY} <prep_to ({tag:/VB[ND]?/} >nsubj ({} >nn {lemma:dividend}))"))
+              :attr "dividend"
+              :qual-func (fn [g _] (get-nodes-as-text g (multiline
+                    "{word:/annual(ized| basis)?|quarter(ly)?/} </prep_on|amod/ ({} >nn {lemma:dividend} <dobj 
+                       ({tag:/VB[ND]?/} >prep_to {ner:MONEY}))")))
+              :qual "dividend qualifier"
+              :verifier (make-verifier :attr-val :qual-val)
+              :formatter (make-formatter { :q :qual-val, :qval :qual-val, :a :attr, :aval :attr-val})
+              :rating (make-rating { :core :attr-val :aux [ :qual-val]})
+              :weight 8
              }
 ])
 

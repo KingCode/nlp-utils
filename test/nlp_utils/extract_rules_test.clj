@@ -12,16 +12,36 @@
                           :show-empties false
                           :accuracy true
                           :show-ruleids true 
+
+                          :org-count 23
                 })
 
-(defn show-ruleids? [] (:show-ruleids SETTINGS))
+(def ruletab (ref {}))
+
+(defn use-ruleids? [] (:show-ruleids SETTINGS))
+
+(defn show-ruleids? [] (and (use-ruleids?)
+                            (<= (:org-count SETTINGS) (count @ruletab))))
+
 (defn print-demo? [] (:print-demo SETTINGS))
 (defn test-accuracy? [] (:accuracy SETTINGS))
 
+
 (defn show-ruleids [ test-name r & rs ]
-  (if (show-ruleids?)
-  (let [ ids (apply str (interpose " " (cons (:rule-id r) (map #(:rule-id %) rs)))) ]
-     (println "*** TEST " test-name " used rules " ids " ***"))))
+  (if (use-ruleids?)
+    (let [ ids (->> rs 
+                    (map #(:rule-id %))
+                    (cons (:rule-id r))
+                    (interpose " ")
+                    (apply str)) ]
+      (dosync 
+         (ref-set ruletab (assoc @ruletab test-name ids)))
+      (if (show-ruleids?)
+         (let [ usage (->> @ruletab 
+                           (map #(str "\n\t" (key %) ":\t\t" (val %)))
+                           (apply concat)
+                           (apply str))      ] 
+            (println "**************\nRULE usage:\n" usage "\n**************"))))))
 
 
 (defn filter-analysis [ an ]
@@ -94,7 +114,7 @@
       (is (= "dividend" (:attr r2)))
       (is (= true (:qualifier-val r2)))
       (is (= "quarterly" (:qualifier r2)))
-      (show-ruleids "accuracy-GAP" r1 r2)))))
+      (show-ruleids "GAP" r1 r2)))))
 
 
 (deftest extract-reports-test-HBHC
@@ -115,7 +135,7 @@
       (is (= "$0.24" (:attr-val r)))
       (is (= "quarter" (:qualifier-val r)))
       (is (= "quarterly" (:qualifier r)))
-      (show-ruleids "accuracy-HBHC" r)))))
+      (show-ruleids "HBHC" r)))))
 
 
 (deftest extract-reports-test-GEO
@@ -134,7 +154,7 @@
       (is (= "GEO" org))
       (is (= "$0.5" (:attr-val r)))
       (is (= "first quarterly"(:qualifier-val r)))
-      (show-ruleids "accuracy-GEO" r)))))
+      (show-ruleids "GEO" r)))))
 
 (deftest extract-reports-test-FSTR
    (testing "Should output a report for each sentence in FSTR document"
@@ -153,7 +173,7 @@
       (is (= "Nasdaq:FSTR" org))
       (is (= "$0.03" (:attr-val r)))
       (is (not (nil? (:qualifier-val r))))
-      (show-ruleids "accuracy-FSTR" r)))))
+      (show-ruleids "FSTR" r)))))
 
 
 (deftest extract-reports-test-APOG
@@ -174,7 +194,7 @@
       (is (= "$0.09" (:attr-val r)))
       (is (= true (:qualifier-val r)))
       (is (= "quarterly" (:qualifier r)))
-      (show-ruleids "accuracy-APOG" r)))))
+      (show-ruleids "APOG" r)))))
 
 
 (deftest extract-reports-test-EE
@@ -195,7 +215,7 @@
       (is (= "$0.25" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (= "regular quarterly cash" (:qualifier-val r)))
-      (show-ruleids "accuracy-EE" r)))))
+      (show-ruleids "EE" r)))))
 
 
 (deftest extract-reports-test-CSP
@@ -217,7 +237,7 @@
       (is (= "$0.03" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly" qval) (= true qval))) 
-      (show-ruleids "accuracy-CSP" r)))))
+      (show-ruleids "CSP" r)))))
 
 
 (deftest extract-reports-test-HSC
@@ -239,7 +259,7 @@
       (is (= "$0.205" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly cash" qval) (= true qval))) 
-      (show-ruleids "accuracy-HSC" r)))))
+      (show-ruleids "HSC" r)))))
 
 
 (deftest extract-reports-test-KSS
@@ -261,7 +281,7 @@
       (is (= "$0.35" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly cash" qval) (= true qval))) 
-      (show-ruleids "accuracy-KSS" r)))))
+      (show-ruleids "KSS" r)))))
 
 
 (deftest extract-reports-test-LEN
@@ -283,7 +303,7 @@
       (is (= "$0.04" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly cash" qval) (= true qval))) 
-      (show-ruleids "accuracy-LEN" r)))))
+      (show-ruleids "LEN" r)))))
 
 
 (deftest extract-reports-test-LION
@@ -305,7 +325,7 @@
       (is (= "one new share for every 100 shares" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly cash" qval) (= true qval))) 
-      (show-ruleids "accuracy-LION" r)))))
+      (show-ruleids "LION" r)))))
 
 
 (deftest extract-reports-test-MWV
@@ -327,7 +347,7 @@
       (is (= "$0.25" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "regular quarterly" qval) (= true qval))) 
-      (show-ruleids "accuracy-MWV" r)))))
+      (show-ruleids "MWV" r)))))
 
 
 
@@ -350,7 +370,7 @@
       (is (= "$0.25" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "regular quarterly" qval) (= true qval))) 
-      (show-ruleids "accuracy-PLL" r)))))
+      (show-ruleids "PLL" r)))))
 
 
 (deftest extract-reports-test-QUALCOMM
@@ -367,15 +387,16 @@
     (let [ info (info-from QUALCOMM-reports)
            org (org-from QUALCOMM-reports)
            r1 (:result (first info)) 
-           qval1 (:qualifier-val r1) 
+           qval1 (:qual-val r1) 
            r2 (:result (second info)) 
-           qval2 (:qualifier-val r2) ]
+           qval2 (:qual-val r2) ]
       (is (= "$0.35" (:attr-val r1)))
+      (is (= "$0.25" (:attr-from-val r1)))
       (is (= "dividend" (:attr r1)))
       (is (or (= "quarterly" qval1) (= true qval1))) 
-      (is (= "$1.40" (:attr-val r2)))
+      (is (= "$1.4" (:attr-val r2)))
       (is (= "annualized" qval2))
-      (show-ruleids "accuracy-QUALCOMM" r1 r2)))))
+      (show-ruleids "QUALCOMM" r1 r2)))))
 
 
 (deftest extract-reports-test-ASTEC
@@ -393,10 +414,10 @@
            org (org-from ASTEC-reports)
            r (:result (first info)) 
            qval (:qualifier-val r) ]
-      (is (= "$0.10" (:attr-val r)))
+      (is (= "$0.1" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly cash" qval) (= true qval))) 
-      (show-ruleids "accuracy-ASTEC" r)))))
+      (show-ruleids "ASTEC" r)))))
 
 
 (deftest extract-reports-test-SEASPAN
@@ -427,7 +448,7 @@
       (is (= "increase" (:attr r2)))
       (is (= "quarterly dividend" qval2))
 
-      (show-ruleids "accuracy-SEASPAN" r1 r2)))))
+      (show-ruleids "SEASPAN" r1 r2)))))
 
 
 (deftest extract-reports-test-SLB
@@ -453,7 +474,7 @@
       (is (= "increase" (:attr r1)))
       (is (= "quarterly dividend" qval1))
 
-      (show-ruleids "accuracy-SLB" r1 r2)))))
+      (show-ruleids "SLB" r1 r2)))))
 
 
 (deftest extract-reports-test-SMG
@@ -475,7 +496,7 @@
       (is (= "$0.325" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "cash" qval) (= false qval))) 
-      (show-ruleids "accuracy-SMG" r)))))
+      (show-ruleids "SMG" r)))))
 
 
 (deftest extract-reports-test-SO
@@ -497,7 +518,7 @@
       (is (= "$0.49" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "regular quarterly"  qval) (= true qval))) 
-      (show-ruleids "accuracy-SO" r)))))
+      (show-ruleids "SO" r)))))
 
 
 (deftest extract-reports-test-TXN
@@ -519,7 +540,7 @@
       (is (= "$0.21" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly cash"  qval) (= true qval))) 
-      (show-ruleids "accuracy-TXN" r)))))
+      (show-ruleids "TXN" r)))))
 
 
 (deftest extract-reports-test-VALU
@@ -541,7 +562,7 @@
       (is (= "$0.15" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "quarterly cash"  qval) (= true qval))) 
-      (show-ruleids "accuracy-VALU" r)))))
+      (show-ruleids "VALU" r)))))
 
 
 (deftest extract-reports-test-VNO
@@ -563,7 +584,7 @@
       (is (= "$0.73" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "regular quarterly"  qval) (= true qval))) 
-      (show-ruleids "accuracy-VNO" r)))))
+      (show-ruleids "VNO" r)))))
 
 
 (deftest extract-reports-test-WMB
@@ -585,5 +606,5 @@
       (is (= "$0.33875" (:attr-val r)))
       (is (= "dividend" (:attr r)))
       (is (or (= "regular"  qval) (= false qval))) 
-      (show-ruleids "accuracy-WMB" r)))))
+      (show-ruleids "WMB" r)))))
 
