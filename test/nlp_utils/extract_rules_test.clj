@@ -26,19 +26,31 @@
 (defn print-demo? [] (:print-demo SETTINGS))
 (defn test-accuracy? [] (:accuracy SETTINGS))
 
+(defn tablen 
+([s tab]  
+;;  (let [ len (.length s) tmod (mod len tab)] 
+;;      (-> len (- tmod) (/ tab))))
+    (-> (.length s) (/ tab)))
+([ s ]
+  (tablen s 4)))
+
+(defn sep-tabs
+[ s ]
+  (if (-> (tablen s) (> 1)) ":\t" ":\t\t\t"))
 
 (defn show-ruleids [ test-name r & rs ]
   (if (use-ruleids?)
     (let [ ids (->> rs 
                     (map #(:rule-id %))
                     (cons (:rule-id r))
-                    (interpose " ")
-                    (apply str)) ]
+                    (map #(if (nil? %) "*" %))
+                    (interpose "\t")
+                    (apply str))                ]
       (dosync 
          (ref-set ruletab (assoc @ruletab test-name ids)))
       (if (show-ruleids?)
          (let [ usage (->> @ruletab 
-                           (map #(str "\n\t" (key %) ":\t\t" (val %)))
+                           (map #(str "\n\t" (key %) (sep-tabs test-name) (val %)))
                            (apply concat)
                            (apply str))      ] 
             (println "**************\nRULE usage:\n" usage "\n**************"))))))
@@ -387,9 +399,9 @@
     (let [ info (info-from QUALCOMM-reports)
            org (org-from QUALCOMM-reports)
            r1 (:result (first info)) 
-           qval1 (:qual-val r1) 
+           qval1 (:qualifier-val r1) 
            r2 (:result (second info)) 
-           qval2 (:qual-val r2) ]
+           qval2 (:qualifier-val r2) ]
       (is (= "$0.35" (:attr-val r1)))
       (is (= "$0.25" (:attr-from-val r1)))
       (is (= "dividend" (:attr r1)))
@@ -445,8 +457,8 @@
       (is (or (= "quarterly common share" qval1) (= true qval1)))
 
       (is (= "$0.0625" (:attr-val r2)))
-      (is (= "increase" (:attr r2)))
-      (is (= "quarterly dividend" qval2))
+      (is (= "dividend increase" (:attr r2)))
+      (is (= "quarterly common share" qval2))
 
       (show-ruleids "SEASPAN" r1 r2)))))
 
@@ -470,9 +482,11 @@
            qval2 (:qualifier-val r2)
         ]
       (is (= "NYSE:SLB" org))
-      (is (= "13.6%" (:attr-val r1)))
-      (is (= "increase" (:attr r1)))
-      (is (= "quarterly dividend" qval1))
+      (is (= "13.6 %" (:attr-val r1)))
+      (is (= "dividend increase" (:attr r1)))
+      (is (= "quarterly" qval1))
+      (is (= "$0.3125" (:attr-val r2)))
+      (is (= nil qval2))
 
       (show-ruleids "SLB" r1 r2)))))
 
