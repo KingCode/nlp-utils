@@ -29,8 +29,6 @@
 
 (defn tablen 
 ([s tab]  
-;;  (let [ len (.length s) tmod (mod len tab)] 
-;;      (-> len (- tmod) (/ tab))))
     (-> (.length s) (/ tab)))
 ([ s ]
   (tablen s 4)))
@@ -576,7 +574,7 @@
       (is (= "NYSE:SMG" org))
       (is (= "$0.325" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "cash" qval) (= false qval))) 
+      (is (not (quarterly? r)))
       (show-ruleids "SMG" r)))))
 
 
@@ -595,7 +593,7 @@
            org (org-from SO-reports)
            r (:result (first info)) 
            qval (:qualifier-val r) ]
-      (is (= "Southern Company" org))
+      (is (= "Southern" org))
       (is (= "$0.49" (:attr-val r)))
       (is (= "dividend" (:attr r)))
 ;;      (is (or (= "regular quarterly"  qval) (= true qval))) 
@@ -691,6 +689,6 @@
       (is (= "$0.33875" (:attr-val r)))
       (is (= "dividend" (:attr r)))
 ;;      (is (or (= "regular"  qval) (= false qval))) 
-      (is (quarterly? r))
+      (is (not (quarterly? r)))
       (show-ruleids "WMB" r)))))
 

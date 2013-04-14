@@ -206,8 +206,19 @@ Of the meta entries, :rule-id  and :rating are compulsory, and :verifier and :fo
               :formatter (make-formatter { :q :qualifier-val, :qval :qualifier-val, :a :attr, :aval :attr-val})
               :rating (make-rating { :core :attr-val :aux [ :qualifier-val ]})
               :weight 5
+             },
+             {
+              :rule-id 16
+              :attr-func (fn [g _] (get-money g (multiline "{ner:MONEY}=A <prep_of ({tag:NN} 
+                                        < ({tag:/VB[NDZ]?/} >dobj ({lemma:dividend} >/nn|amod/ {word:/quarter(ly)?/})))")))
+              :attr "dividend"
+              :qualifier-func  (constantly "quarterly")
+              :qualifier "quarterly"
+              :verifier (make-verifier :attr-val)
+              :formatter (make-formatter { :q :qualifier :qval :qualifier-val, :a :attr, :aval, :attr-val })
+              :rating (make-rating {:core :attr-val})
+              :weight 5
              }
-
 ])
 
 
