@@ -16,12 +16,13 @@
                           :org-count 23
                 })
 
-(def ruletab (ref {}))
+(def ruletab (ref { :tests {} :frequencies {} }))
 
 (defn use-ruleids? [] (:show-ruleids SETTINGS))
 
 (defn show-ruleids? [] (and (use-ruleids?)
-                            (<= (:org-count SETTINGS) (count @ruletab))))
+                            (<= (:org-count SETTINGS) 
+                                (count (:tests @ruletab)))))
 
 (defn print-demo? [] (:print-demo SETTINGS))
 (defn test-accuracy? [] (:accuracy SETTINGS))
@@ -38,22 +39,63 @@
 [ s ]
   (if (-> (tablen s) (> 1)) ":\t" ":\t\t\t"))
 
+(defn addto-usage-freqs [ ids freqs ]
+  (loop [ is ids fs freqs ]
+    (if (empty? is) fs
+        (let [ f-is (first is) 
+               uptd (assoc fs f-is 
+                  (if-let [ f (get fs f-is) ]
+                        (inc f) 1)) 
+             ]
+             (recur (next is) uptd)))))
+
+
+(defn format-rule-freqs [ freqs ]
+    (->> (keys freqs) 
+         (sort #(let [ v1 (get freqs %1) v2 (get freqs %2) ] 
+                                    (minus (compare v1 v2))))
+         (map #(str % " (" (get freqs %) ")"))
+         (interpose ", ")
+         (apply concat)
+         (apply str)))
+                                 
+
 (defn show-ruleids [ test-name r & rs ]
   (if (use-ruleids?)
-    (let [ ids (->> rs 
-                    (map #(:rule-id %))
-                    (cons (:rule-id r))
+    (let [ ids-raw
+               (->> rs
+               (map #(:rule-id %))
+               (cons (:rule-id r)))
+           ids-ints (filter #(not (nil? %)) ids-raw)
+           ids (->> ids-raw 
                     (map #(if (nil? %) "*" %))
                     (interpose "\t")
                     (apply str))                ]
       (dosync 
-         (ref-set ruletab (assoc @ruletab test-name ids)))
+         (ref-set ruletab { :tests 
+                                (assoc (:tests @ruletab) test-name ids)
+                            :frequencies 
+                                (addto-usage-freqs ids-ints (:frequencies @ruletab))
+                           }))
       (if (show-ruleids?)
-         (let [ usage (->> @ruletab 
+         (let [ usage (->> (:tests @ruletab)
                            (map #(str "\n\t" (key %) (sep-tabs test-name) (val %)))
                            (apply concat)
-                           (apply str))      ] 
-            (println "**************\nRULE usage:\n" usage "\n**************"))))))
+                           (apply str))      
+                used (->> (:tests @ruletab) (map val) 
+                             (map #(->> (.split % "\t") (filter (fn [s] (not (= "*" %))))))
+                             (map #(-> (fn [s] (Integer/valueOf s)) (map %)))
+                             (apply concat)
+                             (set))
+                num-used (count used)
+                used-str (->> (interpose " " used) (apply str))
+                num-orgs (:org-count SETTINGS) 
+                rules-dist (format-rule-freqs (:frequencies @ruletab))
+               ] 
+            (println "**************\nRULE usage distribution:\n" usage "\nUsed rules: " used-str 
+                    "\n(" num-used " rules for " num-orgs " companies.)"
+                    "\n Rule usage frequencies:\n\t" rules-dist
+                      "\n**************"))))))
 
 
 (defn filter-analysis [ an ]
@@ -105,6 +147,13 @@
 (defn info-from [ reports ]
   (second reports))
 
+(def QUART_P #"(.*\s+)?quarter(ly)?(\s+.*)?")
+
+(defn quarterly? [ result ]
+  (if-let [ qval (:qualifier-val result) ]
+    (or (->> (.matcher QUART_P qval) (.find)) (true? qval))))
+
+
 (deftest extract-reports-test-GAP
    (testing "Should output a report for each  sentence in document"
      (if (print-demo?)
@@ -124,8 +173,9 @@
       (is (= "dividend" (:attr r1)))
       (is (= "$0.15" (:attr-val r2)))
       (is (= "dividend" (:attr r2)))
-      (is (= true (:qualifier-val r2)))
-      (is (= "quarterly" (:qualifier r2)))
+      (is (quarterly? r2))
+;;      (is (= true (:qualifier-val r2)))
+;;      (is (= "quarterly" (:qualifier r2)))
       (show-ruleids "GAP" r1 r2)))))
 
 
@@ -145,8 +195,9 @@
            r (:result (first info)) ]
       (is (= "Nasdaq:HBHC" org))
       (is (= "$0.24" (:attr-val r)))
-      (is (= "quarter" (:qualifier-val r)))
-      (is (= "quarterly" (:qualifier r)))
+;;      (is (= "quarter" (:qualifier-val r)))
+;;      (is (= "quarterly" (:qualifier r)))
+      (is (quarterly? r))
       (show-ruleids "HBHC" r)))))
 
 
@@ -165,7 +216,8 @@
            r (:result (first info)) ]
       (is (= "GEO" org))
       (is (= "$0.5" (:attr-val r)))
-      (is (= "first quarterly"(:qualifier-val r)))
+;;      (is (= "first quarterly"(:qualifier-val r)))
+      (is (quarterly? r))
       (show-ruleids "GEO" r)))))
 
 (deftest extract-reports-test-FSTR
@@ -184,7 +236,8 @@
            r (:result (first info)) ]
       (is (= "Nasdaq:FSTR" org))
       (is (= "$0.03" (:attr-val r)))
-      (is (not (nil? (:qualifier-val r))))
+;;      (is (not (nil? (:qualifier-val r))))
+      (is (quarterly? r))
       (show-ruleids "FSTR" r)))))
 
 
@@ -204,8 +257,9 @@
            r (:result (first info)) ]
       (is (= "Nasdaq:APOG" org))
       (is (= "$0.09" (:attr-val r)))
-      (is (= true (:qualifier-val r)))
-      (is (= "quarterly" (:qualifier r)))
+;;      (is (= true (:qualifier-val r)))
+;;      (is (= "quarterly" (:qualifier r)))
+      (is (quarterly? r))
       (show-ruleids "APOG" r)))))
 
 
@@ -226,7 +280,8 @@
       (is (= "NYSE:EE" org))
       (is (= "$0.25" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (= "regular quarterly cash" (:qualifier-val r)))
+;;      (is (= "regular quarterly cash" (:qualifier-val r)))
+      (is (quarterly? r))
       (show-ruleids "EE" r)))))
 
 
@@ -248,7 +303,8 @@
       (is (= "Nasdaq:CSPI" org))
       (is (= "$0.03" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "quarterly" qval) (= true qval))) 
+;;      (is (or (= "quarterly" qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "CSP" r)))))
 
 
@@ -270,7 +326,8 @@
       (is (= "NYSE:HSC" org))
       (is (= "$0.205" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "quarterly cash" qval) (= true qval))) 
+;;      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "HSC" r)))))
 
 
@@ -292,7 +349,8 @@
       (is (= "Kohl's" org))
       (is (= "$0.35" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "quarterly cash" qval) (= true qval))) 
+;;      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "KSS" r)))))
 
 
@@ -314,7 +372,8 @@
       (is (= "NYSE:LEN" org))
       (is (= "$0.04" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "quarterly cash" qval) (= true qval))) 
+;;      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "LEN" r)))))
 
 
@@ -336,7 +395,8 @@
       (is (= "NASDAQ:LION" org))
       (is (= "one new share for every 100 shares" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "quarterly cash" qval) (= true qval))) 
+;;      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "LION" r)))))
 
 
@@ -358,7 +418,8 @@
       (is (= "NYSE:MWV" org))
       (is (= "$0.25" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "regular quarterly" qval) (= true qval))) 
+;;      (is (or (= "regular quarterly" qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "MWV" r)))))
 
 
@@ -381,7 +442,8 @@
       (is (= "NYSE:PLL" org))
       (is (= "$0.25" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "regular quarterly" qval) (= true qval))) 
+;;      (is (or (= "regular quarterly" qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "PLL" r)))))
 
 
@@ -405,7 +467,8 @@
       (is (= "$0.35" (:attr-val r1)))
       (is (= "$0.25" (:attr-from-val r1)))
       (is (= "dividend" (:attr r1)))
-      (is (or (= "quarterly" qval1) (= true qval1))) 
+;;      (is (or (= "quarterly" qval1) (= true qval1))) 
+      (is (quarterly? r1))
       (is (= "$1.4" (:attr-val r2)))
       (is (= "annualized" qval2))
       (show-ruleids "QUALCOMM" r1 r2)))))
@@ -428,7 +491,8 @@
            qval (:qualifier-val r) ]
       (is (= "$0.1" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "quarterly cash" qval) (= true qval))) 
+;;      (is (or (= "quarterly cash" qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "ASTEC" r)))))
 
 
@@ -454,11 +518,13 @@
           ]
       (is (= "$0.3125" (:attr-val r1)))
       (is (= "dividend" (:attr r1)))
-      (is (or (= "quarterly common share" qval1) (= true qval1)))
+;;      (is (or (= "quarterly common share" qval1) (= true qval1)))
+      (is (quarterly? r1))
 
       (is (= "$0.0625" (:attr-val r2)))
       (is (= "dividend increase" (:attr r2)))
-      (is (= "quarterly common share" qval2))
+;;      (is (= "quarterly common share" qval2))
+      (is (quarterly? r2))
 
       (show-ruleids "SEASPAN" r1 r2)))))
 
@@ -484,7 +550,8 @@
       (is (= "NYSE:SLB" org))
       (is (= "13.6 %" (:attr-val r1)))
       (is (= "dividend increase" (:attr r1)))
-      (is (= "quarterly" qval1))
+;;      (is (= "quarterly" qval1))
+      (is (quarterly? r1))
       (is (= "$0.3125" (:attr-val r2)))
       (is (= nil qval2))
 
@@ -531,7 +598,8 @@
       (is (= "Southern Company" org))
       (is (= "$0.49" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "regular quarterly"  qval) (= true qval))) 
+;;      (is (or (= "regular quarterly"  qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "SO" r)))))
 
 
@@ -553,7 +621,8 @@
       (is (= "NASDAQ:TXN" org))
       (is (= "$0.21" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "quarterly cash"  qval) (= true qval))) 
+;;      (is (or (= "quarterly cash"  qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "TXN" r)))))
 
 
@@ -575,7 +644,8 @@
       (is (= "NASDAQ:VALU" org))
       (is (= "$0.15" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "quarterly cash"  qval) (= true qval))) 
+;;      (is (or (= "quarterly cash"  qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "VALU" r)))))
 
 
@@ -597,7 +667,8 @@
       (is (= "NYSE:VNO" org))
       (is (= "$0.73" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "regular quarterly"  qval) (= true qval))) 
+;;      (is (or (= "regular quarterly"  qval) (= true qval))) 
+      (is (quarterly? r))
       (show-ruleids "VNO" r)))))
 
 
@@ -619,6 +690,7 @@
       (is (= "NYSE:WMB" org))
       (is (= "$0.33875" (:attr-val r)))
       (is (= "dividend" (:attr r)))
-      (is (or (= "regular"  qval) (= false qval))) 
+;;      (is (or (= "regular"  qval) (= false qval))) 
+      (is (quarterly? r))
       (show-ruleids "WMB" r)))))
 

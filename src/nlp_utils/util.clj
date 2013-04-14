@@ -5,6 +5,12 @@
            (clojure.lang Ratio)
            (org.apache.commons.io FileUtils)))
 
+
+(defn minus
+"Yields a number with n's size and its sign reversed, .e.g. 2 -> -2."
+[ n ]
+  (- n))
+
 (defn ^Ratio make-ratio
 "Yields a Ratio, circumventing clojure's coercion to Long."
 [ numerator, denominator ]
@@ -195,3 +201,4 @@ to remove only the newlines matching re. Otherwise all newlines are removed.
       s)
 ([ ^String s ]
   (.replaceAll s "\n" "")))
+
