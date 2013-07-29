@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# To use, invoke this script from the command line
+# surrounded with backticks: `./leinversion`
+
+echo export LEIN_VERSION="2.0.0-preview10"
