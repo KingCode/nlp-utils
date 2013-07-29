@@ -22,9 +22,6 @@ why, I have been using the following  workaround:
 and replace it with the following:
 
 
-# Added by JF as a workaround to use 2.0.0 without having to 
-# edit this file each time
-#
 DEFAULT_LEIN_VERSION="2.2.0"
 if [[ -n "$LEIN_VERSION" ]] ; then
     echo "Attempting to use pre-set lein version: $LEIN_VERSION"
